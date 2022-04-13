@@ -18,5 +18,8 @@ int main(int argc, char * argv[]) {
     else if (!strcmp(command, "init")) {
         puts("init");
     }
+    else if (!strcmp(command, "checkout")) {
+        puts("checkout");
+    }
     return 0;
 }
