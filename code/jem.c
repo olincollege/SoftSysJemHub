@@ -7,7 +7,14 @@
 // TODO:
 /*
 git add :
+- Add file from working tree to index/staging area
+- The index is essentially a list of files/paths
 
+git commit :
+- Create a branch object to be committed from the index to the repository
+- ONLY objects listed in the index can be committed
+- Update HEAD to be the latest commit
+- 
 
 git checkout : 
 - create identifiers for every commit and store them on disk.
