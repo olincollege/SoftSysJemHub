@@ -1,3 +1,5 @@
+#pragma once
+
 typedef struct graphnode {
     struct graphnode * descendants;
 } GraphNode;
