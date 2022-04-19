@@ -1,5 +1,10 @@
 #pragma once
 
+typedef struct {
+    int file_count;
+    char *f_addrs[128];
+} Index;
+
 typedef struct graphnode {
     struct graphnode * descendants;
 } GraphNode;

@@ -48,6 +48,14 @@ int checkdir(){
     return 0;
 }
 
+void add_files_to_index(int argc, char * argv[], Index *ind){
+    // Add all arguments after the first to the index
+    for (int i=1; i < argc; i++){
+        ind->f_addrs[ind->file_count + i] = argv[i];
+        puts(ind->f_addrs[ind->file_count + i]);
+    }
+}
+
 int main(int argc, char * argv[]) {
     if (argc == 1) {
         puts("Not a valid use of ./jem!");
@@ -55,8 +63,10 @@ int main(int argc, char * argv[]) {
     
     char * command = argv[1];
 
-    if (!strcmp(command, "add")) { // strcmp returns 0 when true, so use ! to get 1
-        puts("add");
+    if (!strcmp(command, "add")) {
+        Index * ind = (Index * )malloc(sizeof(Index));
+        add_files_to_index(argc, argv, ind);
+        puts("Files Added");
     }
     else if (!strcmp(command, "commit")) {
         puts("commit");
