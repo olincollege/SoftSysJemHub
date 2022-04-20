@@ -51,8 +51,9 @@ int checkdir(){
 void add_files_to_index(int argc, char * argv[], Index *ind){
     // Add all arguments after the first to the index
     for (int i=2; i < argc; i++){
-        ind->f_addrs[ind->file_count + i] = argv[i];
-        puts(ind->f_addrs[ind->file_count + i]);
+        ind->f_addrs[ind->file_count] = argv[i];
+        ind->file_count +=1;
+        puts(ind->f_addrs[ind->file_count-1]);
     }
     ind->file_count+=argc-2;
 }
@@ -61,6 +62,54 @@ Index* make_index() {
     Index * ind = (Index * )malloc(sizeof(Index));
     ind->file_count=0;
     return ind;
+}
+
+void free_index(Index * ind) {
+    free(ind);
+}
+
+char ** get_test_files() {
+    // Index 0 and 1 reserved for filename and command
+    char** test_files = malloc(4 * sizeof(char*));
+    test_files[2] = "./test/test1.txt";
+    test_files[3] = "./test/test2.txt";
+    return test_files;
+}
+
+void free_test_files(char ** test_files) {
+    free(test_files);
+}
+
+Index* load_index() {
+    // TODO: implement this (temporary example files below)
+    Index * ind = make_index();
+    char** test_files = get_test_files();
+    add_files_to_index(4, test_files, ind);
+    return ind;
+}
+
+GraphNode * load_head() {
+    // TODO: implement this (temporary head below)
+    GraphNode * head = malloc(sizeof(GraphNode));
+    return head;
+}
+
+SnapTree * create_snaptree(Index * ind) {
+    // TODO: Implement this (placeholder snaptree for now)
+    // Create treenode from index
+    // Create snaptree from treenode
+    SnapTree * snap_tree = (SnapTree *)malloc(sizeof(SnapTree));
+    return snap_tree;
+}
+
+Commit * create_commit() {
+    Index * ind = load_index();
+    Commit * commit = (Commit *)malloc(sizeof(Commit));
+    commit->author = "test_author";
+    commit->message = "test commit message";
+    commit->parent = load_head();
+    commit->snapshots = *create_snaptree(ind);
+    return commit;
 }
 
 int main(int argc, char * argv[]) {
@@ -72,8 +121,10 @@ int main(int argc, char * argv[]) {
         Index* ind = make_index();
         add_files_to_index(argc, argv, ind);
         puts("Files Added");
+        free_index(ind);
     }
     else if (!strcmp(command, "commit")) {
+        create_commit();
         puts("commit");
     }
     else if (!strcmp(command, "init")) {
