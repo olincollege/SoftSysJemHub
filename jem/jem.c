@@ -72,15 +72,19 @@ int main(int argc, char * argv[]) {
         puts("commit");
     }
     else if (!strcmp(command, "init")) {
-        puts("init");
-        if (checkdir() == 0) {
-            printf("Checked dir");
-            const char* dir_name = ".jem";
-            DIR *dir = opendir("~/");
-            int dfd = dirfd(dir);
-            int dir_status = mkdirat(dfd, dir_name, S_IRWXU);
-            if (dir_status == -1) {
-                error("Failed to create .jem directory");
+        errno = 0;
+        printf("initializing...");
+        const char* dir_name = ".jem";
+        int ret = mkdir(dir_name, S_IRWXU);
+        if (ret == -1) {
+            switch (errno)
+            {
+            case EEXIST:
+                printf("Directory already exists");
+                break;
+            default:
+                printf(".jem directory failed to create!");
+                break;
             }
         }
     }
