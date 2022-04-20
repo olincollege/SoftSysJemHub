@@ -6,6 +6,9 @@
 #include <dirent.h>
 #include <errno.h>
 #include <glib.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 // TODO:
 /*
@@ -112,33 +115,68 @@ Commit * create_commit() {
     return commit;
 }
 
+// void print_snap_tree(SnapTree tree) {
+//     int snap_num = 0;
+//     int i = 0;
+//     while (tree.tree_head.snap != NULL) {
+//         while (tree.tree_head.snap[i] != NULL) {
+//             puts(tree.tree_head.snap[i]);
+//             i++;
+//         }
+//         tree.tree_head = * tree.tree_head.descendants;
+//         snap_num += 1;
+//     }
+// }
+
 int main(int argc, char * argv[]) {
     if (argc == 1) {
         puts("Not a valid use of ./jem!");
         return 0;  }
     char * command = argv[1];
+
+
+
     if (!strcmp(command, "add")) {
         Index* ind = make_index();
         add_files_to_index(argc, argv, ind);
         puts("Files Added");
         free_index(ind);
     }
+
+
+
     else if (!strcmp(command, "commit")) {
         create_commit();
         puts("commit");
     }
+
+
+
     else if (!strcmp(command, "init")) {
-        puts("init");
-        if (checkdir() == 0) {
-            printf("Checked dir");
-            const char* dir_name = ".jem";
-            DIR *dir = opendir("~/");
-            int dfd = dirfd(dir);
-            int dir_status = mkdirat(dfd, dir_name, S_IRWXU);
-            if (dir_status == -1) {
-                error("Failed to create .jem directory");
+        struct stat st = {0};
+        if (stat("./.jem", &st) == -1) { // Check if the directory exists; if not, make it
+            mkdir("./.jem", 0777);
+        }
+        SnapTree snap_tree;
+        FILE ** snapshot;
+        int i = 0;
+
+        DIR *dir;
+        struct dirent *ent;
+        if ((dir = opendir ("./")) != NULL) { // Open current directory
+        while ((ent = readdir (dir)) != NULL) {
+            if (strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")) { // Get all the files in the current directory that are not . or ..
+                printf("file %i: %s\n", i, ent->d_name);
+                snap_tree.tree_head.snap[i] = ent->d_name;
+                puts(snap_tree.tree_head.snap[i]);
+                i++;
             }
         }
+        closedir (dir);
+        } else {
+            error("Could not open directory");
+        }
+
     }
     else if (!strcmp(command, "checkout")) {
         puts("checkout");
