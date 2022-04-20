@@ -50,21 +50,26 @@ int checkdir(){
 
 void add_files_to_index(int argc, char * argv[], Index *ind){
     // Add all arguments after the first to the index
-    for (int i=1; i < argc; i++){
+    for (int i=2; i < argc; i++){
         ind->f_addrs[ind->file_count + i] = argv[i];
         puts(ind->f_addrs[ind->file_count + i]);
     }
+    ind->file_count+=argc-2;
+}
+
+Index* make_index() {
+    Index * ind = (Index * )malloc(sizeof(Index));
+    ind->file_count=0;
+    return ind;
 }
 
 int main(int argc, char * argv[]) {
     if (argc == 1) {
         puts("Not a valid use of ./jem!");
         return 0;  }
-    
     char * command = argv[1];
-
     if (!strcmp(command, "add")) {
-        Index * ind = (Index * )malloc(sizeof(Index));
+        Index* ind = make_index();
         add_files_to_index(argc, argv, ind);
         puts("Files Added");
     }
