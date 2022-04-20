@@ -9,9 +9,9 @@ typedef struct graphnode {
     struct graphnode * descendants;
 } GraphNode;
 
-typedef struct {
-    FILE ** snap; // this type might change, right now I was thinking an array of file pointers
-    struct TreeNode * descendants;
+typedef struct treenode {
+    char * snap[128]; // this type might change, right now I was thinking an array of file pointers
+    struct treenode descendants;
 } TreeNode;
 
 typedef struct {
