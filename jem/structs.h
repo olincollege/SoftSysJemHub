@@ -2,7 +2,7 @@
 
 typedef struct {
     int file_count;
-    char *f_addrs[128];
+    char *file_names[128];
 } Index;
 
 typedef struct graphnode {
@@ -22,7 +22,7 @@ typedef struct {
     GraphNode * parent; // This should be the state of HEAD at the type of committing
     char * author; // Person who commits
     char * message; // Commit MSG
-    SnapTree snapshots; // Snapshot containing actual information to update the current HEAD + make changes
+    SnapTree * snapshots; // Snapshot containing actual information to update the current HEAD + make changes
 } Commit; // commit object
 
 

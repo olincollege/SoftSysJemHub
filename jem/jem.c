@@ -35,7 +35,7 @@ void error(char *msg)
     exit(1);
 }
 
-int checkdir(){
+int check_dir(){
     DIR* dir = opendir("~/.jem");
     if (dir) {
         /* Directory exists. */
@@ -51,27 +51,9 @@ int checkdir(){
     return 0;
 }
 
-void add_files_to_index(int argc, char * argv[], Index *ind){
-    // Add all arguments after the first to the index
-    for (int i=2; i < argc; i++){
-        ind->f_addrs[ind->file_count] = argv[i];
-        ind->file_count +=1;
-        puts(ind->f_addrs[ind->file_count-1]);
-    }
-    ind->file_count+=argc-2;
-}
-
-Index* make_index() {
-    Index * ind = (Index * )malloc(sizeof(Index));
-    ind->file_count=0;
-    return ind;
-}
-
-void free_index(Index * ind) {
-    free(ind);
-}
 
 char ** get_test_files() {
+    // Returns list of strings with test filenames
     // Index 0 and 1 reserved for filename and command
     char** test_files = malloc(4 * sizeof(char*));
     test_files[2] = "./test/test1.txt";
@@ -83,6 +65,29 @@ void free_test_files(char ** test_files) {
     free(test_files);
 }
 
+////
+//// INDEX
+////
+
+Index* make_index() {
+    Index * ind = (Index * )malloc(sizeof(Index));
+    ind->file_count=0;
+    return ind;
+}
+
+void free_index(Index * ind) {
+    free(ind);
+}
+
+void add_files_to_index(int argc, char * argv[], Index *ind){
+    // Add all arguments after the first to the index
+    for (int i=2; i < argc; i++){
+        ind->file_names[ind->file_count] = argv[i];
+        puts(ind->file_names[ind->file_count]); // Print added filename
+        ind->file_count +=1;
+    }
+}
+
 Index* load_index() {
     // TODO: implement this (temporary example files below)
     Index * ind = make_index();
@@ -91,28 +96,77 @@ Index* load_index() {
     return ind;
 }
 
+void save_index(Index* ind) {
+    // TODO: implement this
+}
+
+////
+//// GRAPHNODE
+////
+
 GraphNode * load_head() {
     // TODO: implement this (temporary head below)
+    // Get the latest commit
     GraphNode * head = malloc(sizeof(GraphNode));
     return head;
 }
 
-SnapTree * create_snaptree(Index * ind) {
-    // TODO: Implement this (placeholder snaptree for now)
-    // Create treenode from index
-    // Create snaptree from treenode
+
+////
+//// TREENODE
+////
+
+TreeNode * create_tree_node() {
+    TreeNode * tree_node = (TreeNode *)malloc(sizeof(TreeNode));
+    return tree_node;
+}
+
+void free_tree_node(TreeNode * tree_node) {
+    free(tree_node);
+}
+
+////
+//// SNAPTREE
+////
+
+SnapTree * create_snap_tree() {
     SnapTree * snap_tree = (SnapTree *)malloc(sizeof(SnapTree));
     return snap_tree;
 }
 
-Commit * create_commit() {
-    Index * ind = load_index();
-    Commit * commit = (Commit *)malloc(sizeof(Commit));
-    commit->author = "test_author";
-    commit->message = "test commit message";
-    commit->parent = load_head();
-    commit->snapshots = *create_snaptree(ind);
-    return commit;
+void free_snap_tree(SnapTree * snap_tree) {
+    // TODO: do we need to free nested structs?
+    free(snap_tree);
+}
+
+SnapTree * create_snap_tree_from_index(Index * ind) {
+    // TODO: Implement this (placeholder snaptree for now)
+    // Create treenode from index
+    // Create snaptree from treenode
+    SnapTree * snap_tree = create_snap_tree();
+    return snap_tree;
+}
+
+SnapTree * create_snap_tree_current_dir() {
+    // Create a SnapTree of the current directory
+    SnapTree * snap_tree = create_snap_tree();
+    snap_tree->tree_head = *create_tree_node();
+    int i = 0;
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir ("./")) != NULL) { // Open current directory
+        while ((ent = readdir (dir)) != NULL) {
+            if (strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")) { // Get all the files in the current directory that are not . or ..
+                snap_tree->tree_head.snap[i] = ent->d_name;
+                printf("file %i: %s\n", i, snap_tree->tree_head.snap[i]);
+                i++;
+            }
+        }
+        closedir (dir);
+    } else {
+        error("Could not open directory");
+    }
+    return snap_tree;
 }
 
 // void print_snap_tree(SnapTree tree) {
@@ -128,56 +182,52 @@ Commit * create_commit() {
 //     }
 // }
 
+////
+//// COMMIT
+////
+
+Commit * create_commit() {
+    Index * ind = load_index();
+    Commit * commit = (Commit *)malloc(sizeof(Commit));
+    commit->author = "test_author";
+    commit->message = "test commit message";
+    commit->parent = load_head();
+    commit->snapshots = create_snap_tree_from_index(ind);
+    return commit;
+}
+
+void save_commit(Commit * commit) {
+    // TODO: Implement this
+}
+
 int main(int argc, char * argv[]) {
     if (argc == 1) {
         puts("Not a valid use of ./jem!");
         return 0;  }
     char * command = argv[1];
 
-
-
     if (!strcmp(command, "add")) {
         Index* ind = make_index();
         add_files_to_index(argc, argv, ind);
+        save_index(ind);
         puts("Files Added");
         free_index(ind);
     }
 
-
-
     else if (!strcmp(command, "commit")) {
-        create_commit();
+        Commit * commit = create_commit();
+        save_commit(commit);
         puts("commit");
     }
 
-
-
     else if (!strcmp(command, "init")) {
+        // Check if the jem directory exists; if not, make it
         struct stat st = {0};
-        if (stat("./.jem", &st) == -1) { // Check if the directory exists; if not, make it
+        if (stat("./.jem", &st) == -1) {
             mkdir("./.jem", 0777);
         }
-        SnapTree snap_tree;
-        FILE ** snapshot;
-        int i = 0;
-
-        DIR *dir;
-        struct dirent *ent;
-        if ((dir = opendir ("./")) != NULL) { // Open current directory
-        while ((ent = readdir (dir)) != NULL) {
-            if (strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")) { // Get all the files in the current directory that are not . or ..
-                printf("file %i: %s\n", i, ent->d_name);
-                snap_tree.tree_head.snap[i] = ent->d_name;
-                puts(snap_tree.tree_head.snap[i]);
-                i++;
-            }
-        }
-        closedir (dir);
-        } else {
-            error("Could not open directory");
-        }
-
     }
+
     else if (!strcmp(command, "checkout")) {
         puts("checkout");
     }
