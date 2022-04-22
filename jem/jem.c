@@ -135,7 +135,7 @@ SnapTree * create_snap_tree() {
 }
 
 void free_snap_tree(SnapTree * snap_tree) {
-    // TODO: do we need to free nested structs?
+    free(snap_tree->tree_head);
     free(snap_tree);
 }
 
@@ -150,15 +150,15 @@ SnapTree * create_snap_tree_from_index(Index * ind) {
 SnapTree * create_snap_tree_current_dir() {
     // Create a SnapTree of the current directory
     SnapTree * snap_tree = create_snap_tree();
-    snap_tree->tree_head = *create_tree_node();
+    snap_tree->tree_head = create_tree_node();
     int i = 0;
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir ("./")) != NULL) { // Open current directory
         while ((ent = readdir (dir)) != NULL) {
             if (strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")) { // Get all the files in the current directory that are not . or ..
-                snap_tree->tree_head.snap[i] = ent->d_name;
-                printf("file %i: %s\n", i, snap_tree->tree_head.snap[i]);
+                snap_tree->tree_head->snap[i] = ent->d_name;
+                printf("file %i: %s\n", i, snap_tree->tree_head->snap[i]);
                 i++;
             }
         }
@@ -186,11 +186,11 @@ SnapTree * create_snap_tree_current_dir() {
 //// COMMIT
 ////
 
-Commit * create_commit() {
+Commit * create_commit(char * message) {
     Index * ind = load_index();
     Commit * commit = (Commit *)malloc(sizeof(Commit));
     commit->author = "test_author";
-    commit->message = "test commit message";
+    commit->message = message;
     commit->parent = load_head();
     commit->snapshots = create_snap_tree_from_index(ind);
     return commit;
@@ -198,6 +198,12 @@ Commit * create_commit() {
 
 void save_commit(Commit * commit) {
     // TODO: Implement this
+}
+
+void free_commit(Commit * commit) {
+    free(commit->snapshots);
+    free(commit->parent);
+    free(commit);
 }
 
 int main(int argc, char * argv[]) {
@@ -215,9 +221,14 @@ int main(int argc, char * argv[]) {
     }
 
     else if (!strcmp(command, "commit")) {
-        Commit * commit = create_commit();
+        char * message = "";
+        if (argc > 2) {
+            message = argv[2];
+        }
+        Commit * commit = create_commit(message);
         save_commit(commit);
         puts("commit");
+        free_commit(commit);
     }
 
     else if (!strcmp(command, "init")) {
@@ -225,7 +236,11 @@ int main(int argc, char * argv[]) {
         struct stat st = {0};
         if (stat("./.jem", &st) == -1) {
             mkdir("./.jem", 0777);
+            puts("JEM Initialized");
+        } else {
+            puts("This is a JEM project already");
         }
+        // TODO: add relevent initial files to .jem
     }
 
     else if (!strcmp(command, "checkout")) {

@@ -15,7 +15,7 @@ typedef struct {
 } TreeNode;
 
 typedef struct {
-    TreeNode tree_head;
+    TreeNode * tree_head;
 } SnapTree;
 
 typedef struct {
