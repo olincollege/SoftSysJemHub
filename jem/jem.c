@@ -8,8 +8,10 @@
 #include <glib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <openssl/sha.h>
 
-
+#define MAX_FILE_SIZE 8192
+#define SHA1_LENGTH 160
 // TODO:
 /*
 git add :
@@ -186,6 +188,36 @@ SnapTree * create_snap_tree_current_dir() {
 //// COMMIT
 ////
 
+char * get_data_from_file(FILE * file) {
+    char * txt = (char *) malloc(MAX_FILE_SIZE * sizeof(char));
+    char word[64];
+    int filled = 0;
+    while (fscanf(file ,"%63s", word) == 1) {
+        for (int i = 0; i < strlen(word); i++){
+            txt[filled] = word[i];
+            filled++;
+        }
+        puts(word);
+    }
+    return txt;
+}
+
+void free_data_from_file(char * data){
+    free(data);
+}
+
+char * hash_file(char txt[]) {
+    // The data to be hashed
+    size_t length = strlen(txt);
+    printf("strlen = %li\n", length);
+
+    unsigned char * hash = (char*) malloc(SHA1_LENGTH * sizeof(char)); // len(hash) = SHA_DIGEST_LENGTH
+    SHA1(txt, length, hash);
+    printf("your hash is %s\n", hash);
+    // hash now contains the 20-byte SHA-1 hash
+    return hash;
+}
+
 Commit * create_commit(char * message) {
     Index * ind = load_index();
     Commit * commit = (Commit *)malloc(sizeof(Commit));
@@ -218,6 +250,36 @@ int main(int argc, char * argv[]) {
         save_index(ind);
         puts("Files Added");
         free_index(ind);
+    }
+
+    else if (!strcmp(command, "hash")) { // TESTING BLOCK FOR THE SHA1 HASHING FUNC
+        FILE* file = fopen("test/test1.txt","r");
+        char* file_data = get_data_from_file(file);
+        printf("File data: %s\n", file_data);
+        char txt[MAX_FILE_SIZE]; int i = 0;
+        while (*file_data != '\0') {
+            txt[i] = *file_data;
+            file_data++;
+            i++; 
+        }
+        printf("Txt = %s", txt);
+        file_data -= i; // Decrement pointer to free memory and make valgrind happy
+        printf("\nGot data from file\n");
+
+        free_data_from_file(file_data);
+        printf("Freed datar\n");
+
+        char * hp = hash_file(txt);
+        char hash[SHA1_LENGTH]; i=0;
+        while (*hp != '\0') {
+            hash[i] = *hp;
+            hp++; i++;
+        }
+
+        free_data_from_file(hp - i);
+
+        printf("\n Freed hp \n");
+        printf("%s\n", hash);
     }
 
     else if (!strcmp(command, "commit")) {

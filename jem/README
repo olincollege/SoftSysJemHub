@@ -1,0 +1,10 @@
+Installation Requirements:
+
+GLIB
+
+openssl:
+https://www.openssl.org/source/
+1. Download 2022-Mar-15 15:24:36 	openssl-1.1.1n.tar.gz
+2. Extract the file by running `sudo tar -xf openssl-1.1.1n.tar.gz -C /usr/include`
+3. Navigate to `/usr/include/openssl-1.1.1n` and run `sudo ./config`
+4. Run `sudo make install` and wait 3-5 minutes.
