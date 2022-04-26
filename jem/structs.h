@@ -1,28 +1,51 @@
 #pragma once
+#include <sys/stat.h>
+#include "reference.h"
+
+// life is easier when we know the size of things
+typedef struct {
+  size_t size;
+  char* string;
+} SizedString;
 
 typedef struct {
-    int file_count;
-    char *file_names[128];
+    mode_t mode;
+    long ctime;
+    long mtime;
+    reference_t *reference;
+    SizedString *path;
+} IndexEntry;
+
+typedef struct {
+    size_t file_count; 
+    // rare case where we don't use references,
+    // beause these are temporary they shouldn't be saved elsewhere
+    IndexEntry *entries; // files added to index
 } Index;
 
-typedef struct graphnode {
-    struct graphnode * descendants;
-} GraphNode;
-
+// make sure to mark which are trees and which are not
 typedef struct {
-    char * snap[128]; // this type might change, right now I was thinking an array of file pointers
-    struct TreeNode * parent;
-} TreeNode;
+    SizedString path;
+    mode_t mode;
+    // reference can be used to find stored copy of file
+    reference_t *reference;
+} Snapshot;
 
+// difference is children is a list
 typedef struct {
-    TreeNode * tree_head;
+    SizedString path; // where the snapshot is (directory or file)
+    mode_t mode;
+    // TODO: this needs to be sorted for creating tree from index
+    reference_t **children; // list of references to snapshots or snap trees
 } SnapTree;
 
 typedef struct {
-    GraphNode * parent; // This should be the state of HEAD at the type of committing
-    char * author; // Person who commits
-    char * message; // Commit MSG
-    SnapTree * snapshots; // Snapshot containing actual information to update the current HEAD + make changes
+    // 1 commit unless a merge, in which case it will be 2
+    size_t parents_count;
+    reference_t *parents; // Normally this should be the state of HEAD at the type of committing
+    SizedString *author; // Person who commits
+    SizedString *message; // Commit MSG
+    reference_t *tree; // Snapshot containing actual information to update the current HEAD + make changes
 } Commit; // commit object
 
 
