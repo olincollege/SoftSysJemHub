@@ -8,10 +8,9 @@
 #include <glib.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <openssl/sha.h>
+#include "reference.h"
+#include "storage.h"
 
-#define MAX_FILE_SIZE 8192
-#define SHA1_LENGTH 160
 // TODO:
 /*
 git add :
@@ -84,8 +83,9 @@ void free_index(Index * ind) {
 void add_files_to_index(int argc, char * argv[], Index *ind){
     // Add all arguments after the first to the index
     for (int i=2; i < argc; i++){
-        ind->file_names[ind->file_count] = argv[i];
-        puts(ind->file_names[ind->file_count]); // Print added filename
+        // TODO: broke, will fix - elvis
+        //ind->file_names[ind->file_count] = argv[i];
+        //puts(ind->file_names[ind->file_count]); // Print added filename
         ind->file_count +=1;
     }
 }
@@ -106,25 +106,25 @@ void save_index(Index* ind) {
 //// GRAPHNODE
 ////
 
-GraphNode * load_head() {
+reference_t * load_head() {
     // TODO: implement this (temporary head below)
-    // Get the latest commit
-    GraphNode * head = malloc(sizeof(GraphNode));
+    // Get the latest commit from head file
+    reference_t * head = malloc(sizeof(reference_t));
     return head;
 }
 
 
 ////
-//// TREENODE
+//// SNAPSHOT
 ////
 
-TreeNode * create_tree_node() {
-    TreeNode * tree_node = (TreeNode *)malloc(sizeof(TreeNode));
-    return tree_node;
+Snapshot * create_tree_node() {
+    Snapshot * snapshot = (Snapshot *)malloc(sizeof(Snapshot));
+    return snapshot;
 }
 
-void free_tree_node(TreeNode * tree_node) {
-    free(tree_node);
+void free_tree_node(Snapshot * snapshot) {
+    free(snapshot);
 }
 
 ////
@@ -137,7 +137,8 @@ SnapTree * create_snap_tree() {
 }
 
 void free_snap_tree(SnapTree * snap_tree) {
-    free(snap_tree->tree_head);
+    free_sized_string(&snap_tree->path);
+    // TODO: loop through children and each reference
     free(snap_tree);
 }
 
@@ -151,16 +152,17 @@ SnapTree * create_snap_tree_from_index(Index * ind) {
 
 SnapTree * create_snap_tree_current_dir() {
     // Create a SnapTree of the current directory
+    // TODO: i broke this, will fix ASAP -elvis
     SnapTree * snap_tree = create_snap_tree();
-    snap_tree->tree_head = create_tree_node();
+    //snap_tree->tree_head = create_tree_node();
     int i = 0;
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir ("./")) != NULL) { // Open current directory
         while ((ent = readdir (dir)) != NULL) {
             if (strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")) { // Get all the files in the current directory that are not . or ..
-                snap_tree->tree_head->snap[i] = ent->d_name;
-                printf("file %i: %s\n", i, snap_tree->tree_head->snap[i]);
+                //snap_tree->tree_head->snap[i] = ent->d_name;
+                //printf("file %i: %s\n", i, snap_tree->tree_head->snap[i]);
                 i++;
             }
         }
@@ -188,43 +190,15 @@ SnapTree * create_snap_tree_current_dir() {
 //// COMMIT
 ////
 
-char * get_data_from_file(FILE * file) {
-    char * txt = (char *) malloc(MAX_FILE_SIZE * sizeof(char));
-    char word[64];
-    int filled = 0;
-    while (fscanf(file ,"%63s", word) == 1) {
-        for (int i = 0; i < strlen(word); i++){
-            txt[filled] = word[i];
-            filled++;
-        }
-        puts(word);
-    }
-    return txt;
-}
-
-void free_data_from_file(char * data){
-    free(data);
-}
-
-char * hash_file(char txt[]) {
-    // The data to be hashed
-    size_t length = strlen(txt);
-    printf("strlen = %li\n", length);
-
-    unsigned char * hash = (char*) malloc(SHA1_LENGTH * sizeof(char)); // len(hash) = SHA_DIGEST_LENGTH
-    SHA1(txt, length, hash);
-    printf("your hash is %s\n", hash);
-    // hash now contains the 20-byte SHA-1 hash
-    return hash;
-}
-
 Commit * create_commit(char * message) {
     Index * ind = load_index();
     Commit * commit = (Commit *)malloc(sizeof(Commit));
-    commit->author = "test_author";
-    commit->message = message;
-    commit->parent = load_head();
-    commit->snapshots = create_snap_tree_from_index(ind);
+    commit->author = make_sized_string("test_author");
+    commit->message = make_sized_string(message);
+    commit->parents_count = 1;
+    commit->parents = load_head();
+    // TODO: replace with a reference
+    //commit->tree = create_snap_tree_from_index(ind);
     return commit;
 }
 
@@ -233,8 +207,9 @@ void save_commit(Commit * commit) {
 }
 
 void free_commit(Commit * commit) {
-    free(commit->snapshots);
-    free(commit->parent);
+    free(commit->tree);
+    // TODO: make sure this works with multiple
+    free(commit->parents);
     free(commit);
 }
 
@@ -253,33 +228,10 @@ int main(int argc, char * argv[]) {
     }
 
     else if (!strcmp(command, "hash")) { // TESTING BLOCK FOR THE SHA1 HASHING FUNC
-        FILE* file = fopen("test/test1.txt","r");
-        char* file_data = get_data_from_file(file);
-        printf("File data: %s\n", file_data);
-        char txt[MAX_FILE_SIZE]; int i = 0;
-        while (*file_data != '\0') {
-            txt[i] = *file_data;
-            file_data++;
-            i++; 
-        }
-        printf("Txt = %s", txt);
-        file_data -= i; // Decrement pointer to free memory and make valgrind happy
-        printf("\nGot data from file\n");
-
-        free_data_from_file(file_data);
-        printf("Freed datar\n");
-
-        char * hp = hash_file(txt);
-        char hash[SHA1_LENGTH]; i=0;
-        while (*hp != '\0') {
-            hash[i] = *hp;
-            hp++; i++;
-        }
-
-        free_data_from_file(hp - i);
-
-        printf("\n Freed hp \n");
-        printf("%s\n", hash);
+        reference_t *hash = make_file_reference("test/test1.txt");
+        print_reference(hash);
+        // after done using the reference
+        free_reference(hash);
     }
 
     else if (!strcmp(command, "commit")) {
