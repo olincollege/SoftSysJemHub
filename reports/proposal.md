@@ -3,11 +3,14 @@
 Elvis Wolcott, Jonas Kazlauskas, Miles Mezaki
 
 ### Reflection On Our Previous Project ###
-Jonas
+#### Jonas
 My previous experience was lonely. I did some stuff and it worked but it wasn’t super fun and I missed working with others. This project I want to work with partners so that I can have more fun and we can build something bigger.
-Elvis:
+
+#### Elvis
 Last project I enjoyed the teaming experience and final state we reached, but overall was disappointed that it wasn’t as involved/ambitious as I would have liked. Because it was very split up into separate pieces with minimal interaction, I didn’t have to collaborate directly as much as I would have liked. This structure also meant there wasn’t as much accountability so it was easier to procrastinate. I think with more accountability we could have made something much more advanced with all that we learned. This project I will be more proactive about organization and setting intermediate deadlines for progress.
-Miles: My previous experience felt like it was artificial in that I was very unproductive and felt I didn’t learn as much as I could have. I wasn’t as motivated by the topic I was researching and programming, and realized that passion is very important to devoting time and effort to a programming project. I think having teammates will also be very constructive to both my learning and my work output as we will provide checks and balances for each other.
+
+#### Miles
+My previous experience felt like it was artificial in that I was very unproductive and felt I didn’t learn as much as I could have. I wasn’t as motivated by the topic I was researching and programming, and realized that passion is very important to devoting time and effort to a programming project. I think having teammates will also be very constructive to both my learning and my work output as we will provide checks and balances for each other.
 
 ### Project Objectives and Expectations ###
 
@@ -15,11 +18,13 @@ Our goal is to make a git-like version control system. We hope to extend this MV
 
 ### Project Learning Goals ###
 
-Jonas
+#### Jonas
 I want to learn more about how git works and why it is such a widely used version control system. I also want to work on my overall C development skills such as creating make files, using libraries, and networking.
-Miles
+
+#### Miles
 I want to learn more about how Git optimizes for storage space while still maintaining the existence of every previous version of a document. I would love to discover exactly how this is done. I also want to work with sockets and understand internet connections on a more fundamental level.
-Elvis
+
+#### Elvis
 I want to learn more about low level network programming and how to write robust networked programs that can deal with loss of connection and other errors. I also hope to build the skills necessary to effectively develop c software on a team and take advantage of git and make effectively to do so. I would like to improve my ability to test c programs thoroughly and especially consider how to do this best around networking code and distributed systems.
 
 ### Resources and Needs ### 
