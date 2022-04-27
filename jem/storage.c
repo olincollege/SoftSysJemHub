@@ -46,28 +46,6 @@ void serialize_sized_string(unsigned char** buffer, SizedString *string) {
 // all data structures are stored with their size to make creating buffers easy
 // except when required, the size is discarded when they are loaded
 
-// calculate bytes required to store a commit
-size_t commit_size(Commit *commit) {
-	return  sizeof(size_t) + // size
-			(size_t)(commit->parents_count * sizeof(reference_t)) + // parents
-			sized_string_size(commit->author) + sizeof(size_t) + // author string
-			sized_string_size(commit->message) + sizeof(size_t) +// message string
-			sizeof(reference_t); // snapshot tree
-}
-
-// serialize a commit
-void serialize_commit(unsigned char** buffer, Commit *commit) {
-	unsigned char* position = buffer;
-	serialize_size(&position, commit_size(commit));
-	serialize_size(&position, commit->parents_count);
-	for (int i = 0; i < commit->parents_count; i++) {
-		serialize_reference(&position, commit->parents[i]);
-	}
-	serialize_sized_string(&position, commit->author);
-	serialize_sized_string(&position, commit->message);
-	serialize_reference(&position, commit->tree);
-}
-
 SizedString *make_sized_string(char *string) {
 	size_t size = strlen(string);
 	SizedString *sstring = malloc(sizeof(SizedString));
