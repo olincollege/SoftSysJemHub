@@ -173,19 +173,6 @@ SnapTree * create_snap_tree_current_dir() {
     return snap_tree;
 }
 
-// void print_snap_tree(SnapTree tree) {
-//     int snap_num = 0;
-//     int i = 0;
-//     while (tree.tree_head.snap != NULL) {
-//         while (tree.tree_head.snap[i] != NULL) {
-//             puts(tree.tree_head.snap[i]);
-//             i++;
-//         }
-//         tree.tree_head = * tree.tree_head.descendants;
-//         snap_num += 1;
-//     }
-// }
-
 ////
 //// COMMIT
 ////
