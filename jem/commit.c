@@ -14,11 +14,11 @@ size_t commit_size(Commit *commit) {
 
 // serialize a commit
 void serialize_commit(unsigned char** buffer, Commit *commit) {
-	unsigned char* position = buffer;
+	unsigned char* position = *buffer;
 	serialize_size(&position, commit_size(commit));
 	serialize_size(&position, commit->parents_count);
 	for (int i = 0; i < commit->parents_count; i++) {
-		serialize_reference(&position, commit->parents[i]);
+		serialize_reference(&position, &commit->parents[i]);
 	}
 	serialize_sized_string(&position, commit->author);
 	serialize_sized_string(&position, commit->message);

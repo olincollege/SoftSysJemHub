@@ -51,7 +51,7 @@ SizedString *make_sized_string(char *string) {
 	size_t size = strlen(string);
 	SizedString *sstring = malloc(sizeof(SizedString));
 	sstring->size = size;
-	sstring->string = &string;
+	sstring->string = string;
 	return sstring;
 }
 
