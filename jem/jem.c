@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include "structs.h"
 #include <dirent.h>
 #include <errno.h>
 #include <glib.h>
@@ -10,6 +9,9 @@
 #include <unistd.h>
 #include "reference.h"
 #include "storage.h"
+#include "commit.h"
+#include "index.h"
+#include "snaptree.h"
 
 // TODO:
 /*
@@ -178,7 +180,7 @@ SnapTree * create_snap_tree_current_dir() {
 ////
 
 Commit * create_commit(char * message) {
-    Index * ind = load_index();
+    //Index * ind = load_index();
     Commit * commit = (Commit *)malloc(sizeof(Commit));
     commit->author = make_sized_string("test_author");
     commit->message = make_sized_string(message);

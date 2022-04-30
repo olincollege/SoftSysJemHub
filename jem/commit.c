@@ -1,7 +1,7 @@
-#include "structs.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "commit.h"
 
 // calculate bytes required to store a commit
 size_t commit_size(Commit *commit) {
