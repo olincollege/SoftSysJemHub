@@ -1,6 +1,8 @@
 #pragma once
 #include "reference.h"
-#include "structs.h"
+#include "storage.h"
+#include <sys/stat.h>
+
 
 // make sure to mark which are trees and which are not
 typedef struct {
