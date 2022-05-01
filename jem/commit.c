@@ -25,6 +25,10 @@ void serialize_commit(unsigned char** buffer, Commit *commit) {
 	serialize_reference(&position, commit->tree);
 }
 
+Commit *deserialize_commit(reference_t *ref) {
+
+}
+
 // example:
 // size_t size = commit_size(commit);
 // unsigned char* buffer = malloc();

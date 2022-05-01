@@ -5,11 +5,33 @@
 
 // helpers for serializing common data types
 // not necessarily the most optimized but results in pretty clean code imo
-// TODO: maybe refactor out into small files for each type that have the definition
-// and code to serialize/deserialize etc so that one doesn't get changed without the other
 void serialize_reference(unsigned char** buffer, reference_t *reference) {
 	memcpy(*buffer, reference, sizeof(reference_t));
 	*buffer += sizeof(reference_t);
+}
+
+void write_buffer_to_disk(unsigned char** buffer) {
+	reference_t *filename = make_reference(buffer, sizeof(buffer));
+	FILE *fw = fopen(*filename, "w");
+	int i = 0;
+	while(buffer[i]!='\0')
+	{
+		fputc(buffer[i], fw);
+		i++;
+	}
+	fclose(fw);
+}
+
+void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
+	FILE *fp = fopen(*reference, "r");
+	int i = 0;
+	if (fp != NULL) {
+    size_t newLen = fread(buffer, sizeof(char), sizeof(buffer), fp);
+    if ( ferror( fp ) != 0 ) {
+        fputs("Error reading file", stderr);
+    }
+    fclose(fp);
+	}
 }
 
 void serialize_size(unsigned char** buffer, size_t size) {
