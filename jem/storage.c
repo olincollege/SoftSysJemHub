@@ -10,15 +10,15 @@ void serialize_reference(unsigned char** buffer, reference_t *reference) {
 	*buffer += sizeof(reference_t);
 }
 
+void add_null_terminator(unsigned char** buffer) {
+
+}
+
 void write_buffer_to_disk(unsigned char** buffer) {
 	char * filename = reference_to_char(make_reference(buffer, sizeof(buffer)));
-	FILE *fw = fopen(filename, "w");
-	int i = 0;
-	while(*buffer[i]!='\0')
-	{
-		fputc(*buffer[i], fw);
-		i++;
-	}
+	// TODO add .jem directory path to filename
+	FILE *fw = fopen("test.txt", "w");
+	fwrite(*buffer, sizeof(buffer), 1, fw);
 	fclose(fw);
 }
 

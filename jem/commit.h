@@ -19,4 +19,4 @@ size_t commit_size(Commit *commit);
 void serialize_commit(unsigned char** buffer, Commit *commit);
 
 // deserialize a commit
-Commit *deserialize_commit(reference_t *ref);
+Commit *deserialize_commit(unsigned char ** buffer);

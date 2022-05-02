@@ -186,14 +186,13 @@ Commit * create_commit(char * message) {
     commit->message = make_sized_string(message);
     commit->parents_count = 1;
     commit->parents = load_head();
+    // TODO change tree
+    commit->tree = make_file_reference("./test/test1.txt");
     // TODO: replace with a reference
     //commit->tree = create_snap_tree_from_index(ind);
     return commit;
 }
 
-void save_commit(Commit * commit) {
-    // TODO: Implement this
-}
 
 void free_commit(Commit * commit) {
     free(commit->tree);
@@ -229,9 +228,19 @@ int main(int argc, char * argv[]) {
             message = argv[2];
         }
         Commit * commit = create_commit(message);
-        save_commit(commit);
+        unsigned char *serialized_commit = malloc(commit_size(commit));
+        serialize_commit(&serialized_commit, commit);
+        write_buffer_to_disk(&serialized_commit);
         puts("commit");
+        free(serialized_commit);
         free_commit(commit);
+
+        // Below is for testing deserializing a commit
+        reference_t *ref = make_file_reference("test.txt");
+        unsigned char *buff = malloc(commit_size(commit));
+        read_ref_from_disk(&buff, ref);
+        deserialize_commit(&buff);
+        puts("loaded");
     }
 
     else if (!strcmp(command, "init")) {
