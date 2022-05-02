@@ -20,6 +20,10 @@ reference_t *make_reference(void *bytes, size_t size) {
   return reference;
 }
 
+char * reference_to_char(reference_t * reference) {
+  return (char *) *reference;
+}
+
 // get a reference to a file
 reference_t *make_file_reference(char* filepath) {
   reference_t *reference = malloc(sizeof(reference_t));

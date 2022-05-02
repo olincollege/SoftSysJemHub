@@ -24,3 +24,9 @@ void serialize_sized_string(unsigned char** buffer, SizedString *string);
 
 // make a sized string from a c string
 SizedString *make_sized_string(char *string);
+
+// save the buffer to disk
+void write_buffer_to_disk(unsigned char** buffer);
+
+// read from reference filename into buffer
+void read_ref_from_disk(unsigned char** buffer, reference_t *reference);
