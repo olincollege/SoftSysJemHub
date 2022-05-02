@@ -26,7 +26,9 @@ void serialize_commit(unsigned char** buffer, Commit *commit) {
 }
 
 Commit *deserialize_commit(reference_t *ref) {
-
+	Commit * commit = malloc(sizeof(Commit));
+	// TODO implement
+	return commit;
 }
 
 // example:

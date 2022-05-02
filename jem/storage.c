@@ -11,22 +11,22 @@ void serialize_reference(unsigned char** buffer, reference_t *reference) {
 }
 
 void write_buffer_to_disk(unsigned char** buffer) {
-	reference_t *filename = make_reference(buffer, sizeof(buffer));
-	FILE *fw = fopen(*filename, "w");
+	char * filename = reference_to_char(make_reference(buffer, sizeof(buffer)));
+	FILE *fw = fopen(filename, "w");
 	int i = 0;
-	while(buffer[i]!='\0')
+	while(*buffer[i]!='\0')
 	{
-		fputc(buffer[i], fw);
+		fputc(*buffer[i], fw);
 		i++;
 	}
 	fclose(fw);
 }
 
 void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
-	FILE *fp = fopen(*reference, "r");
-	int i = 0;
+	char * filename = reference_to_char(reference);
+	FILE *fp = fopen(filename, "r");
 	if (fp != NULL) {
-    size_t newLen = fread(buffer, sizeof(char), sizeof(buffer), fp);
+    fread(buffer, sizeof(char), sizeof(buffer), fp);
     if ( ferror( fp ) != 0 ) {
         fputs("Error reading file", stderr);
     }

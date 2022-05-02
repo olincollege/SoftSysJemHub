@@ -18,3 +18,6 @@ reference_t *make_file_reference(char* filepath);
 
 // free a reference
 void free_reference(reference_t *reference);
+
+// cast reference to char pointer
+char * reference_to_char(reference_t *reference);
