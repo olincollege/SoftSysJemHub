@@ -10,8 +10,9 @@ void serialize_reference(unsigned char** buffer, reference_t *reference) {
 	*buffer += sizeof(reference_t);
 }
 
-void add_null_terminator(unsigned char** buffer) {
-
+void deserialize_reference(unsigned char** buffer, reference_t *reference) {
+	memcpy(&reference, buffer, sizeof(reference_t));
+	*buffer += sizeof(reference_t);
 }
 
 // returns the reference to the saved data
@@ -41,10 +42,18 @@ void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
         fputs("Error reading file", stderr);
     }
     fclose(fp);
+	} else {
+		fprintf(stderr, "cannot open input file\n");
 	}
 }
 
 void serialize_size(unsigned char** buffer, size_t size) {
-	*(size_t *)(*buffer) = size; // copy size
+	//*(size_t *)(*buffer) = size; // copy size
+	memcpy(*buffer, &size, sizeof(size_t));
+	*buffer += sizeof(size_t);
+}
+
+void deserialize_size(unsigned char** buffer, size_t *size) {
+	memcpy(size, *buffer, sizeof(size_t));
 	*buffer += sizeof(size_t);
 }
