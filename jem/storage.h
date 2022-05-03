@@ -1,11 +1,6 @@
 #pragma once
 #include "reference.h"
-
-// life is easier when we know the size of things
-typedef struct {
-  size_t size;
-  char* string;
-} SizedString;
+#include "sizedstring.h"
 
 void serialize_reference(unsigned char** buffer, reference_t *reference);
 
@@ -26,7 +21,7 @@ void serialize_sized_string(unsigned char** buffer, SizedString *string);
 SizedString *make_sized_string(char *string);
 
 // save the buffer to disk
-void write_buffer_to_disk(unsigned char** buffer);
+reference_t *write_buffer_to_disk(unsigned char** buffer, size_t size);
 
 // read from reference filename into buffer
 void read_ref_from_disk(unsigned char** buffer, reference_t *reference);
