@@ -20,8 +20,16 @@ reference_t *make_reference(void *bytes, size_t size) {
   return reference;
 }
 
+// https://stackoverflow.com/a/53966346
+void btox(char *xp, unsigned char *bb, int n) {
+    const char xx[]= "0123456789abcdef";
+    while (--n >= 0) xp[n] = xx[(bb[n>>1] >> ((1 - (n&1)) << 2)) & 0xF];
+}
+
 char * reference_to_char(reference_t * reference) {
-  return (char *) *reference;
+  char *string = malloc(40);
+  btox(string, (unsigned char *)reference, 40);
+  return string;
 }
 
 // get a reference to a file

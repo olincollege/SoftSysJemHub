@@ -1,3 +1,5 @@
 *.o
 *.d
 *.vscode
+*.jem
+jem/jem

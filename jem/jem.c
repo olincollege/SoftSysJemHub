@@ -230,16 +230,18 @@ int main(int argc, char * argv[]) {
             message = argv[2];
         }
         Commit * commit = create_commit(message);
-        unsigned char *serialized_commit = malloc(commit_size(commit));
+        size_t size = commit_size(commit);
+        unsigned char *serialized_commit = malloc(size);
         serialize_commit(&serialized_commit, commit);
         puts("create");
+        reference_t *commit_ref = write_buffer_to_disk(&serialized_commit, size);
         write_buffer_to_disk(&serialized_commit);
         puts("commit");
 
         // Below is for testing deserializing a commit
-        reference_t *ref = make_file_reference("test.txt");
-        unsigned char *buff = malloc(commit_size(commit));
-        read_ref_from_disk(&buff, ref);
+        // TODO: size should be saved with commit to avoid this
+        unsigned char *buff = malloc(size);
+        read_ref_from_disk(&buff, commit_ref);
         puts("read");
         Commit * com = malloc(sizeof(Commit));
         deserialize_commit(&buff, com);
