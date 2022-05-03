@@ -16,24 +16,47 @@ size_t commit_size(Commit *commit) {
 void serialize_commit(unsigned char** buffer, Commit *commit) {
 	unsigned char* position = *buffer;
 	serialize_size(&position, commit_size(commit));
+	printf("%lu\n", commit_size(commit));
 	serialize_size(&position, commit->parents_count);
-	for (int i = 0; i < commit->parents_count; i++) {
-		serialize_reference(&position, &commit->parents[i]);
+	printf("%lu\n", commit->parents_count);
+	for (size_t i = 0; i < commit->parents_count; i++) {
+		serialize_reference(&position, commit->parents[i]);
+		print_reference(commit->parents[i]);
 	}
 	serialize_sized_string(&position, commit->author);
+	printf("%lu\n", commit->author->size);
 	serialize_sized_string(&position, commit->message);
+	printf("%lu\n", commit->message->size);
 	serialize_reference(&position, commit->tree);
+	print_reference(commit->tree);
 }
 
-Commit *deserialize_commit(unsigned char ** buffer) {
-	Commit * commit = malloc(sizeof(Commit));
+void deserialize_commit(unsigned char ** buffer, Commit * commit) {
+	unsigned char* position = *buffer;
 	size_t commit_size;
-	memcpy(&commit_size, buffer, sizeof(size_t));
-	*buffer += sizeof(size_t);
-	memcpy(commit->parents_count, buffer, sizeof(size_t));
-	*buffer += sizeof(size_t);
-	// TODO finish implementing
-	return commit;
+	deserialize_size(&position, &commit_size);
+	printf("%lu\n", commit_size);
+	deserialize_size(&position, &commit->parents_count);
+	printf("%lu\n", commit->parents_count);
+	for (size_t i = 0; i < commit->parents_count; i++) {
+		// TODO this could use deserialize reference but I couldn't get it to work
+		memcpy(&commit->parents[i], &position, sizeof(reference_t));
+		print_reference(commit->parents[i]);
+		position+=sizeof(reference_t);
+	}
+	SizedString *author = malloc(sizeof(SizedString));
+	deserialize_sized_string(&position, author);
+	commit->author = author;
+	printf("%lu\n", author->size);
+	printf("%s\n", author->string);
+	SizedString *message = malloc(sizeof(SizedString));
+	deserialize_sized_string(&position, message);
+	commit->message = message;
+	printf("%lu\n", message->size);
+	printf("%s\n", message->string);
+	//deserialize_reference()
+	memcpy(commit->tree, &position, sizeof(reference_t));
+	print_reference(commit->tree);
 }
 
 // example:

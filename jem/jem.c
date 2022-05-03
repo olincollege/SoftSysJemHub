@@ -111,7 +111,7 @@ void save_index(Index* ind) {
 reference_t * load_head() {
     // TODO: implement this (temporary head below)
     // Get the latest commit from head file
-    reference_t * head = malloc(sizeof(reference_t));
+    reference_t * head = make_file_reference("test/test1.txt");
     return head;
 }
 
@@ -185,7 +185,7 @@ Commit * create_commit(char * message) {
     commit->author = make_sized_string("test_author");
     commit->message = make_sized_string(message);
     commit->parents_count = 1;
-    commit->parents = load_head();
+    commit->parents[0] = load_head();
     // TODO change tree
     commit->tree = make_file_reference("./test/test1.txt");
     // TODO: replace with a reference
@@ -196,7 +196,9 @@ Commit * create_commit(char * message) {
 
 void free_commit(Commit * commit) {
     free(commit->tree);
-    // TODO: make sure this works with multiple
+    free(commit->author);
+    free(commit->message);
+    // TODO make sure this works with multiple
     free(commit->parents);
     free(commit);
 }
@@ -230,16 +232,21 @@ int main(int argc, char * argv[]) {
         Commit * commit = create_commit(message);
         unsigned char *serialized_commit = malloc(commit_size(commit));
         serialize_commit(&serialized_commit, commit);
+        puts("create");
         write_buffer_to_disk(&serialized_commit);
         puts("commit");
-        free(serialized_commit);
-        free_commit(commit);
 
         // Below is for testing deserializing a commit
         reference_t *ref = make_file_reference("test.txt");
         unsigned char *buff = malloc(commit_size(commit));
         read_ref_from_disk(&buff, ref);
-        deserialize_commit(&buff);
+        puts("read");
+        Commit * com = malloc(sizeof(Commit));
+        deserialize_commit(&buff, com);
+        free(buff);
+        free(serialized_commit);
+        free_commit(com);
+        free(commit);
         puts("loaded");
     }
 

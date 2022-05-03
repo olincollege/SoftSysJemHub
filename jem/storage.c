@@ -10,32 +10,42 @@ void serialize_reference(unsigned char** buffer, reference_t *reference) {
 	*buffer += sizeof(reference_t);
 }
 
-void add_null_terminator(unsigned char** buffer) {
-
+void deserialize_reference(unsigned char** buffer, reference_t *reference) {
+	memcpy(&reference, buffer, sizeof(reference_t));
+	*buffer += sizeof(reference_t);
 }
+
 
 void write_buffer_to_disk(unsigned char** buffer) {
 	char * filename = reference_to_char(make_reference(buffer, sizeof(buffer)));
 	// TODO add .jem directory path to filename
 	FILE *fw = fopen("test.txt", "w");
-	fwrite(*buffer, sizeof(buffer), 1, fw);
+	fwrite(buffer, sizeof(buffer), 1, fw);
 	fclose(fw);
 }
 
 void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
 	char * filename = reference_to_char(reference);
-	FILE *fp = fopen(filename, "r");
+	FILE *fp = fopen("test.txt", "r");
 	if (fp != NULL) {
     fread(buffer, sizeof(char), sizeof(buffer), fp);
     if ( ferror( fp ) != 0 ) {
         fputs("Error reading file", stderr);
     }
     fclose(fp);
+	} else {
+		fprintf(stderr, "cannot open input file\n");
 	}
 }
 
 void serialize_size(unsigned char** buffer, size_t size) {
-	*(size_t *)(*buffer) = size; // copy size
+	//*(size_t *)(*buffer) = size; // copy size
+	memcpy(*buffer, &size, sizeof(size_t));
+	*buffer += sizeof(size_t);
+}
+
+void deserialize_size(unsigned char** buffer, size_t *size) {
+	memcpy(size, *buffer, sizeof(size_t));
 	*buffer += sizeof(size_t);
 }
 
@@ -57,12 +67,21 @@ void free_sized_string(SizedString *string) {
 }
 
 void serialize_sized_string(unsigned char** buffer, SizedString *string) {
-	// most of the time these will be together in memory, but but don't assume that
-	size_t length = sized_string_length(string);
-	*(size_t *)(*buffer) = length; // copy size
-	memcpy(*buffer+sizeof(size_t), string, length); // copy string
-	*buffer += sizeof(size_t) + length;
+	// most of the time these will be together in memory, but don't assume that
+	// size_t length = sized_string_length(string);
+	//*(size_t *)(*buffer) = length; // copy size
+	memcpy(*buffer, &string->size, sizeof(size_t));
+	*buffer += sizeof(size_t);
+	memcpy(*buffer, string->string, string->size); // copy string
+	*buffer += string->size;
 }
+
+void deserialize_sized_string(unsigned char** buffer, SizedString *string) {
+	deserialize_size(buffer, &string->size);
+	memcpy(&string->string, buffer, string->size);
+	*buffer += string->size;
+}
+
 // in some cases not using reference_t pointers would let us get away with a
 // single memcopy, but it would not work for lists and overall be a headache
 
