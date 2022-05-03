@@ -6,9 +6,10 @@
 // calculate bytes required to store a commit
 size_t commit_size(Commit *commit) {
 	return  sizeof(size_t) + // size
+			sizeof(size_t) + // parent counts
 			(size_t)(commit->parents_count * sizeof(reference_t)) + // parents
-			sized_string_size(commit->author) + sizeof(size_t) + // author string
-			sized_string_size(commit->message) + sizeof(size_t) +// message string
+			sized_string_size(commit->author) + // author string
+			sized_string_size(commit->message) +// message string
 			sizeof(reference_t); // snapshot tree
 }
 
@@ -16,17 +17,17 @@ size_t commit_size(Commit *commit) {
 void serialize_commit(unsigned char** buffer, Commit *commit) {
 	unsigned char* position = *buffer;
 	serialize_size(&position, commit_size(commit));
-	printf("%lu\n", commit_size(commit));
+	printf("size: %lu\n", commit_size(commit));
 	serialize_size(&position, commit->parents_count);
-	printf("%lu\n", commit->parents_count);
+	printf("parents: %lu\n", commit->parents_count);
 	for (size_t i = 0; i < commit->parents_count; i++) {
 		serialize_reference(&position, commit->parents[i]);
 		print_reference(commit->parents[i]);
 	}
 	serialize_sized_string(&position, commit->author);
-	printf("%lu\n", commit->author->size);
+	printf("author string size: %lu\n", commit->author->size);
 	serialize_sized_string(&position, commit->message);
-	printf("%lu\n", commit->message->size);
+	printf("message string size: %lu\n", commit->message->size);
 	serialize_reference(&position, commit->tree);
 	print_reference(commit->tree);
 }
