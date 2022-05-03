@@ -11,13 +11,6 @@ void serialize_snaptree(unsigned char** buffer, SnapTree * tree) {
 	*buffer += sizeof(size_t) + length;
 }
 
-void deserialize_sized_string(unsigned char** buffer, SizedString *string) {
-	memcpy(&string->size, buffer, sizeof(size_t));
-	*buffer += sizeof(size_t);
-	memcpy(&string->string, buffer, string->size);
-	*buffer += string->size;
-}
-
 // free a snapshot
 void free_snapshot(Snapshot *shot) {
 	// TODO: check if this is making any assumptions about memory layout
