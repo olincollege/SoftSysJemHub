@@ -12,6 +12,8 @@ SizedString *make_sized_string(char *string);
 
 void serialize_sized_string(unsigned char** buffer, SizedString *string);
 
+void deserialize_sized_string(unsigned char** buffer, SizedString *string);
+
 // free a sized string
 void free_sized_string(SizedString *string);
 

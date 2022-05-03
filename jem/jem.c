@@ -235,7 +235,6 @@ int main(int argc, char * argv[]) {
         serialize_commit(&serialized_commit, commit);
         puts("create");
         reference_t *commit_ref = write_buffer_to_disk(&serialized_commit, size);
-        write_buffer_to_disk(&serialized_commit);
         puts("commit");
 
         // Below is for testing deserializing a commit

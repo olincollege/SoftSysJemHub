@@ -17,6 +17,13 @@ void serialize_sized_string(unsigned char** buffer, SizedString *string) {
 	*buffer += sizeof(size_t) + length;
 }
 
+void deserialize_sized_string(unsigned char** buffer, SizedString *string) {
+	memcpy(&string->size, buffer, sizeof(size_t));
+	*buffer += sizeof(size_t);
+	memcpy(&string->string, buffer, string->size);
+	*buffer += string->size;
+}
+
 // free a sized string
 void free_sized_string(SizedString *string) {
 	// TODO: check if this is making any assumptions about memory layout

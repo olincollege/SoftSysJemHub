@@ -54,6 +54,6 @@ void serialize_size(unsigned char** buffer, size_t size) {
 }
 
 void deserialize_size(unsigned char** buffer, size_t *size) {
-	memcpy(size, *buffer, sizeof(size_t));
+	memcpy(size, buffer, sizeof(size_t));
 	*buffer += sizeof(size_t);
 }
