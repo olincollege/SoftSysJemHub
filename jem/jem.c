@@ -53,6 +53,23 @@ int check_dir(){
     }
     return 0;
 }
+
+int is_directory(struct dirent * entry){
+    int is_dir = 0;
+    // Check if entry is a directory
+    // Source: https://stackoverflow.com/questions/39429803/how-to-list-first-level-directories-only-in-c/39430337#39430337
+    if (entry->d_type != DT_UNKNOWN && entry->d_type != DT_LNK) {
+        is_dir = (entry->d_type == DT_DIR);
+    } else {
+        struct stat stbuf;
+        stat(entry->d_name, &stbuf);
+        is_dir = S_ISDIR(stbuf.st_mode);
+    }
+    return is_dir;
+}
+
+int get_dir_filecount(){}
+
 reference_t** make_reference_children(char* path)
 {
 
@@ -66,7 +83,6 @@ reference_t** make_reference_children(char* path)
         error("Unable to read directory");
     }
 
-    
     while( (entry=readdir(folder)) )
     {
         files++;
@@ -76,8 +92,21 @@ reference_t** make_reference_children(char* path)
               );
     }
     reference_t** children = malloc(files * sizeof(reference_t));
-    for (int i = 0; i < files; i++) {
-        children[i] = make_file_reference(entry->d_name);
+    int i = 0;
+    int is_dir;
+    struct dirent *de;
+    while( (de=readdir(folder)) )
+    {
+        int is_dir = is_directory(de);
+        printf("%d\n", is_dir)
+        if (is_dir) {
+            // TODO: make directory reference
+            puts("File is directory");
+        } else {
+            children[i] = make_file_reference(de->d_name);
+        }
+        i++;
+        puts("here");
     }
 
     closedir(folder);
@@ -271,7 +300,7 @@ int main(int argc, char * argv[]) {
         SnapTree * snaptree = create_snap_tree(); // allocs snaptree
         SizedString * path = make_sized_string(filepath); // allocs sizedstring
         snaptree->path = path;
-        printf("Filepath: %s", snaptree->path->string);
+        printf("Filepath: %s\n", snaptree->path->string);
 
         struct stat v; // Use sys/stat.h stat() command to store file info in a struct.
         stat(filepath, &v); 
@@ -344,7 +373,6 @@ int main(int argc, char * argv[]) {
         } else {
             puts("This is a JEM project already");
         }
-        // TODO: add relevent initial files to .jem
     }
 
     else if (!strcmp(command, "checkout")) {
