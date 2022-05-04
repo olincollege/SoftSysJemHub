@@ -34,7 +34,7 @@ void copy_file_to_jem(char * src_filepath, reference_t *file_ref) {
 	FILE *source, *target;
 	char ch;
 	char target_filepath[300] = ".jem/";
-	strcat(target_filepath, reference_to_char(file_ref));
+	strncat(target_filepath, reference_to_char(file_ref), 40);
 	source = fopen(src_filepath, "r");
 	if( source == NULL ) {
 			fputs("Error opening file", stderr);

@@ -27,8 +27,9 @@ void btox(char *xp, unsigned char *bb, int n) {
 }
 
 char * reference_to_char(reference_t * reference) {
-  char *string = malloc(40);
+  char *string = malloc(40 + 1);
   btox(string, (unsigned char *)reference, 40);
+  string[40] = '\0';
   return string;
 }
 

@@ -12,6 +12,9 @@ typedef struct {
     reference_t *tree; // Snapshot containing actual information to update the current HEAD + make changes
 } Commit; // commit object
 
+// create a commit from the current working tree
+//Commit * create_commit(char * message);
+
 // calculate bytes required to store a commit
 size_t commit_size(Commit *commit);
 
