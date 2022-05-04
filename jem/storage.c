@@ -79,6 +79,31 @@ void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
 	}
 }
 
+void read_ref_from_disk_char(unsigned char** buffer, char * filename) {
+	// create a buffer big enough for filepath
+	char path[47] = ".jem/";
+	strncat(path, filename, 42);
+	printf("path: %s\n", path);
+	printf("strlen(path) = %i\n", strlen(path));
+	FILE *fp = fopen(path, "r");
+	if (fp != NULL) {
+		size_t size;
+		// read the size first
+		fread(&size, sizeof(size_t), 1, fp);
+		// allocate a buffer
+		*buffer = malloc(size);
+		// load all the data in
+		fseek(fp, 0, SEEK_SET);
+    fread(*buffer, sizeof(char), size, fp);
+    if ( ferror( fp ) != 0 ) {
+        fputs("Error reading file\n", stderr);
+    }
+    fclose(fp);
+	} else {
+		fprintf(stderr, "cannot open input file\n");
+	}
+}
+
 void serialize_size(unsigned char** buffer, size_t size) {
 	//*(size_t *)(*buffer) = size; // copy size
 	memcpy(*buffer, &size, sizeof(size_t));

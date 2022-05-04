@@ -17,3 +17,5 @@ reference_t *write_buffer_to_disk(unsigned char** buffer, size_t size);
 
 // read from reference filename into buffer
 void read_ref_from_disk(unsigned char** buffer, reference_t *reference);
+
+void read_ref_from_disk_char(unsigned char** buffer, char * filename);

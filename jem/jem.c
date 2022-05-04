@@ -371,16 +371,16 @@ int main(int argc, char * argv[]) {
         }
         char * REF_ID = argv[2];
         size_t size = 2*sizeof(reference_t);
-        reference_t* reference = malloc(size);
-        reference = char_to_reference(REF_ID);
-        printf("Reference given: %s : %hhu\n", REF_ID, reference);
+        // reference_t* reference = malloc(size);
+        // reference = char_to_reference(REF_ID);
+        // printf("Reference given: %s : %hhu\n", REF_ID, reference);
 
         // // TESTING SEGMENT, TEMPORARY VARIABLE SETTING
         // reference_t* reference = make_file_reference("./test/test1.txt");
         // // print_reference(reference);
         // printf("Made file reference %hhu\n", reference);
         
-        
+        printf("strlen(REF_ID) + 5 = %i\n", strlen(REF_ID) + 5);
         unsigned char * buffer = (unsigned char * ) malloc(size);
         // serialize_reference(&buffer, reference);
         // printf("Serialized, %u\n", *buffer);
@@ -389,7 +389,7 @@ int main(int argc, char * argv[]) {
         // print_reference(commit);
         reference_t * new_ref = malloc(size);
         // puts("mallocd new ref\n");
-        read_ref_from_disk(&buffer, reference);
+        read_ref_from_disk_char(&buffer, REF_ID);
         puts("Read from disk\n");
         deserialize_reference(&buffer, new_ref);
         puts("Deserialized\n");
