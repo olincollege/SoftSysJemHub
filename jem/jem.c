@@ -68,49 +68,81 @@ int is_directory(struct dirent * entry){
     return is_dir;
 }
 
-int get_dir_filecount(){}
+int is_parent_directory(struct dirent *de) {
+    // Check if parent directory . or ..
+    return (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."));
+}
 
-reference_t** make_reference_children(char* path)
-{
-
+int get_dir_filecount(char * path){
     DIR *folder;
-    struct dirent *entry;
     int files = 0;
-
+    int is_dir = 0;
+    struct dirent *de;
     folder = opendir(path);
     if(folder == NULL)
     {
         error("Unable to read directory");
     }
-
-    while( (entry=readdir(folder)) )
-    {
-        files++;
-        printf("File %3d: %s\n",
-                files,
-                entry->d_name
-              );
-    }
-    reference_t** children = malloc(files * sizeof(reference_t));
-    int i = 0;
-    int is_dir;
-    struct dirent *de;
     while( (de=readdir(folder)) )
     {
-        int is_dir = is_directory(de);
-        printf("%d\n", is_dir)
-        if (is_dir) {
-            // TODO: make directory reference
-            puts("File is directory");
-        } else {
-            children[i] = make_file_reference(de->d_name);
+        if (is_parent_directory(de)) {
+            continue;
         }
-        i++;
-        puts("here");
+        is_dir = is_directory(de);
+        if (is_dir) {
+            char filepath[300];
+            strcpy(filepath, path);
+            strcat(filepath, "/");
+            strcat(filepath, de->d_name);
+            printf("%s\n", filepath);
+            // Recursively get all files
+            files += get_dir_filecount(filepath);
+        }
+        files++;
     }
-
     closedir(folder);
+    return files;
+}
 
+reference_t** make_reference_children(char* path)
+{
+    DIR *folder;
+    struct dirent *de;
+    int is_dir;
+    int files = get_dir_filecount(path);
+    printf("File Count: %d\n", files);
+    reference_t** children = calloc(files, sizeof(reference_t));
+    folder = opendir(path);
+    if(folder == NULL) {
+        error("Unable to read directory");
+    }
+    int i = 0;
+    while( (de=readdir(folder)) ) {
+        if (is_parent_directory(de)) {
+            continue;
+        }
+        printf("File %3d: %s\n", i, de->d_name);
+        int is_dir = is_directory(de);
+        char filepath[300];
+        strcpy(filepath, path);
+        strcat(filepath, "/");
+        strcat(filepath, de->d_name);
+        if (is_dir) {
+            // TODO: make directory reference here
+            puts("File is directory");
+            reference_t** sub_dir_children = make_reference_children(filepath);
+            int i_d = 0;
+            while (sub_dir_children[i_d] != NULL) {
+                children[i] = sub_dir_children[i_d];
+                i++;
+                i_d++;
+            }
+        } else {
+            children[i] = make_file_reference(filepath);
+            i++;
+        }
+    }
+    closedir(folder);
     return children;
 }
 
@@ -309,7 +341,12 @@ int main(int argc, char * argv[]) {
 
         reference_t ** children = make_reference_children(filepath);
         snaptree->children = children;
-
+        int i = 0;
+        while(children[i] != NULL) {
+            print_reference(children[i]);
+            i++;
+        }
+        puts("Added references to children");
 
         size_t size = snaptree_size(snaptree);
         unsigned char * serialized_snaptree = malloc(size);
