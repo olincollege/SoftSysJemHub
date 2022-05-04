@@ -290,20 +290,6 @@ reference_t * create_ref_from_snap_tree(SnapTree * snap) {
 //// COMMIT
 ////
 
-Commit * create_commit(char * message) {
-    //Index * ind = load_index();
-    Commit * commit = (Commit *)malloc(sizeof(Commit));
-    commit->author = make_sized_string("author");
-    commit->message = make_sized_string(message);
-    commit->parents_count = 1;
-    commit->parents[0] = load_head();
-    // TODO: change tree
-    commit->tree = make_file_reference("./test/test1.txt");
-    // TODO: replace with a reference
-    //commit->tree = create_snap_tree_from_index(ind);
-    return commit;
-}
-
 Commit * create_initial_commit() {
     Commit * commit = (Commit *)malloc(sizeof(Commit));
     commit->author = make_sized_string("author");
@@ -321,7 +307,7 @@ void free_commit(Commit * commit) {
     free(commit->tree);
     free(commit->author);
     free(commit->message);
-    // TODO make sure this works with multiple
+    // TODO: make sure this works with multiple
     free(commit->parents);
     free(commit);
 }
@@ -405,14 +391,8 @@ int main(int argc, char * argv[]) {
         serialize_commit(&serialized_commit, commit);
         reference_t *commit_ref = write_buffer_to_disk(&serialized_commit, size);
         update_head(commit_ref);
-        puts("Commit Created");
-
-        // Below is for testing deserializing a commit
-        unsigned char **buff;
-        read_ref_from_disk(&buff, commit_ref);
-        Commit * com = malloc(sizeof(Commit));
-        deserialize_commit(&buff, com);
-        print_commit(commit);
+        puts("Commit Created:");
+        print_reference(commit_ref);
     }
 
     else if (!strcmp(command, "init")) {
