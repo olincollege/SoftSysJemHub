@@ -33,30 +33,33 @@ void serialize_commit(unsigned char** buffer, Commit *commit) {
 }
 
 void deserialize_commit(unsigned char ** buffer, Commit * commit) {
-	unsigned char* position = *buffer;
+	puts("deserialize");
+	printf("start: %p\n", buffer);
 	size_t commit_size;
-	deserialize_size(&position, &commit_size);
-	printf("%lu\n", commit_size);
-	deserialize_size(&position, &commit->parents_count);
-	printf("%lu\n", commit->parents_count);
+	deserialize_size(buffer, &commit_size);
+	printf("commit size: %lu\n", commit_size);
+	printf("next: %p\n", buffer);
+	size_t parents_count;
+	deserialize_size(buffer, &(commit->parents_count));
+	printf("parents count: %lu\n", commit->parents_count);
 	for (size_t i = 0; i < commit->parents_count; i++) {
-		// TODO this could use deserialize reference but I couldn't get it to work
-		memcpy(&commit->parents[i], &position, sizeof(reference_t));
+		// TODO: this could use deserialize reference but I couldn't get it to work
+		memcpy(&commit->parents[i], buffer, sizeof(reference_t));
 		print_reference(commit->parents[i]);
-		position+=sizeof(reference_t);
+		*buffer+=sizeof(reference_t);
 	}
 	SizedString *author = malloc(sizeof(SizedString));
-	deserialize_sized_string(&position, author);
+	deserialize_sized_string(buffer, author);
 	commit->author = author;
-	printf("%lu\n", author->size);
+	printf("%lu\n", commit->author->size);
 	printf("%s\n", author->string);
 	SizedString *message = malloc(sizeof(SizedString));
-	deserialize_sized_string(&position, message);
+	deserialize_sized_string(buffer, message);
 	commit->message = message;
 	printf("%lu\n", message->size);
 	printf("%s\n", message->string);
 	//deserialize_reference()
-	memcpy(commit->tree, &position, sizeof(reference_t));
+	memcpy(&commit->tree, buffer, sizeof(reference_t));
 	print_reference(commit->tree);
 }
 

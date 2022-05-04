@@ -240,17 +240,17 @@ int main(int argc, char * argv[]) {
         puts("commit");
 
         // Below is for testing deserializing a commit
-        // TODO: size should be saved with commit to avoid this
-        unsigned char *buff = malloc(size);
+        unsigned char **buff;
         read_ref_from_disk(&buff, commit_ref);
         puts("read");
         Commit * com = malloc(sizeof(Commit));
         deserialize_commit(&buff, com);
-        free(buff);
-        free(serialized_commit);
-        free_commit(com);
-        free(commit);
-        puts("loaded");
+        // right now the frees are causing it to crash
+        //free(buff);
+        //free(serialized_commit);
+        //free_commit(com);
+        //free_commit(commit);
+        //puts("loaded");
     }
 
     else if (!strcmp(command, "init")) {

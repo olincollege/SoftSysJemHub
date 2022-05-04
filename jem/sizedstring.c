@@ -20,10 +20,15 @@ void serialize_sized_string(unsigned char** buffer, SizedString *string) {
 }
 
 void deserialize_sized_string(unsigned char** buffer, SizedString *string) {
-	memcpy(&string->size, buffer, sizeof(size_t));
+	memcpy(&string->size, *buffer, sizeof(size_t));
 	*buffer += sizeof(size_t);
-	memcpy(&string->string, buffer, string->size);
-	*buffer += string->size;
+	size_t length = string->size - sizeof(size_t);
+	// null terminator is just used when in memory but not saved to disk
+	char *data = malloc(length + 1);
+	data[length] = '\0';
+	memcpy(data, *buffer, length);
+	string->string = data;
+	*buffer += length;
 }
 
 // free a sized string

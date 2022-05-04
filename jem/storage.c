@@ -30,6 +30,7 @@ reference_t *write_buffer_to_disk(unsigned char** buffer, size_t size) {
 	return reference;
 }
 
+// can read size to allocate the buffer
 void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
 	char * filename = reference_to_char(reference);
 	// create a buffer big enough for filepath
@@ -37,7 +38,15 @@ void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
 	strncat(path, filename, 40);
 	FILE *fp = fopen(path, "r");
 	if (fp != NULL) {
-    fread(buffer, sizeof(char), sizeof(buffer), fp);
+		size_t size;
+		// read the size first
+		fread(&size, sizeof(size_t), 1, fp);
+		printf("size on disk: %lu\n", size);
+		// allocate a buffer
+		*buffer = malloc(size);
+		// load all the data in
+		fseek(fp, 0, SEEK_SET);
+    fread(*buffer, sizeof(char), size, fp);
     if ( ferror( fp ) != 0 ) {
         fputs("Error reading file", stderr);
     }
@@ -54,6 +63,6 @@ void serialize_size(unsigned char** buffer, size_t size) {
 }
 
 void deserialize_size(unsigned char** buffer, size_t *size) {
-	memcpy(size, buffer, sizeof(size_t));
+	memcpy(size, *buffer, sizeof(size_t));
 	*buffer += sizeof(size_t);
 }
