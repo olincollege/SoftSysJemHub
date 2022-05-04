@@ -16,7 +16,7 @@ void print_reference(reference_t *reference) {
 // get a reference to a buffer of bytes
 reference_t *make_reference(void *bytes, size_t size) {
   reference_t *reference = malloc(sizeof(reference_t));
-  SHA1(bytes, size, *reference);
+  SHA1(bytes, size, *reference->reference);
   return reference;
 }
 
@@ -49,7 +49,11 @@ reference_t *make_file_reference(char* filepath) {
   } while(bytes > 0);
 
   // finalize hash
-  SHA1_Final(*reference, &context);
+  SHA1_Final(*reference->reference, &context);
+  
+  
+  char * name = "FILE"; // ASSOCIATE TYPE WITH REFERENCE
+  strcpy(reference->type, name);
   return reference;
 }
 

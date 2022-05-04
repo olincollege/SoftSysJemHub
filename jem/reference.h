@@ -5,7 +5,10 @@
 #define REFERENCE_READ_BLOCK_SIZE 1<<16
 
 // sha1 hash
-typedef unsigned char reference_t[SHA_DIGEST_LENGTH]; 
+typedef struct {
+    unsigned char reference[SHA_DIGEST_LENGTH];
+    char type[20];
+} reference_t; 
 
 // print a hash
 void print_reference(reference_t *reference);
