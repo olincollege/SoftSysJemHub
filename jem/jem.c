@@ -187,11 +187,10 @@ Commit * create_commit(char * message) {
     //Index * ind = load_index();
     Commit * commit = (Commit *)malloc(sizeof(Commit));
     commit->author = make_sized_string("author");
-    printf("%s\n", commit->author->string);
     commit->message = make_sized_string(message);
     commit->parents_count = 1;
     commit->parents[0] = load_head();
-    // TODO change tree
+    // TODO: change tree
     commit->tree = make_file_reference("./test/test1.txt");
     // TODO: replace with a reference
     //commit->tree = create_snap_tree_from_index(ind);
@@ -248,7 +247,6 @@ int main(int argc, char * argv[]) {
         }
         Commit * commit = create_commit(message);
         size_t size = commit_size(commit);
-        printf("commit size: %lu bytes\n", size);
         unsigned char *serialized_commit = malloc(size);
         serialize_commit(&serialized_commit, commit);
         puts("create");

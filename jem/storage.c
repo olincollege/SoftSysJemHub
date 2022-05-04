@@ -22,7 +22,6 @@ reference_t *write_buffer_to_disk(unsigned char** buffer, size_t size) {
 	// create a buffer big enough for filepath
 	char path[45] = ".jem/";
 	strncat(path, filename, 40);
-	printf("%s\n", path);
 	
 	FILE *fw = fopen(path, "w");
 	fwrite(*buffer, size, 1, fw);
@@ -41,7 +40,6 @@ void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
 		size_t size;
 		// read the size first
 		fread(&size, sizeof(size_t), 1, fp);
-		printf("size on disk: %lu\n", size);
 		// allocate a buffer
 		*buffer = malloc(size);
 		// load all the data in
