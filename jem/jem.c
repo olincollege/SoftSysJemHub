@@ -369,7 +369,7 @@ int main(int argc, char * argv[]) {
         if (argc != 3) {
             error("Please put a valid reference ID!\n Usage: ./jem checkout REF_ID\n");
         }
-        char * REF_ID = argv[2];
+        unsigned char * REF_ID = argv[2];
         size_t size = 2*sizeof(reference_t);
         // reference_t* reference = malloc(size);
         // reference = char_to_reference(REF_ID);
@@ -382,21 +382,14 @@ int main(int argc, char * argv[]) {
         
         printf("strlen(REF_ID) + 5 = %i\n", strlen(REF_ID) + 5);
         unsigned char * buffer = (unsigned char * ) malloc(size);
-        // serialize_reference(&buffer, reference);
-        // printf("Serialized, %u\n", *buffer);
-        // reference_t * commit = write_buffer_to_disk(&buffer, sizeof(buffer));
-        // printf("written to disk %u\n", *buffer);
-        // print_reference(commit);
-        reference_t * new_ref = malloc(size);
-        // puts("mallocd new ref\n");
         read_ref_from_disk_char(&buffer, REF_ID);
-        puts("Read from disk\n");
-        deserialize_reference(&buffer, new_ref);
-        puts("Deserialized\n");
-        printf("Reference now: %hhu\n" , new_ref);
-
+        Commit * commit = malloc(sizeof(Commit));
+        deserialize_commit(&buffer, commit);
+        print_commit(commit);
+        // TODO this reference is wrong and we need to convert to unsigned char
+        reference_t * new_ref = REF_ID;
         // TODO: Unpack and save into working directory
-
+        print_reference(new_ref);
         update_head(new_ref);
         puts("Updated head");
 

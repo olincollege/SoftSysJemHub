@@ -11,6 +11,7 @@ void serialize_reference(unsigned char** buffer, reference_t *reference) {
 }
 
 void deserialize_reference(unsigned char** buffer, reference_t *reference) {
+	// TODO: im not sure if this works
 	memcpy(reference, buffer, sizeof(reference_t));
 	*buffer += sizeof(reference_t);
 }
