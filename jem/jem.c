@@ -445,14 +445,14 @@ int main(int argc, char * argv[]) {
         // printf("%s", reference);
 
         // TESTING SEGMENT, TEMPORARY VARIABLE SETTING
-        reference_t* reference = make_file_reference("./test/test1.txt");
-        printf("Made file reference\n");
-        size_t size = sizeof(reference);
+        reference_t* reference = make_file_reference("./.jem/testcheck.txt");
+        printf("Made file reference %hhu\n", reference);
+        size_t size = sizeof(reference_t);
         unsigned char * buffer = (unsigned char * ) malloc(size);
         serialize_reference(&buffer, reference);
-        printf("Serialized\n");
+        printf("Serialized, %u\n", *buffer);
         write_buffer_to_disk(&buffer, sizeof(buffer));
-        puts("written to disk\n");
+        printf("written to disk %u\n", *buffer);
         print_reference(reference);
         reference_t * new_ref = malloc(sizeof(reference_t));
         puts("mallocd new ref\n");
@@ -461,7 +461,10 @@ int main(int argc, char * argv[]) {
         deserialize_reference(&buffer, new_ref);
         puts("Deserialized\n");
 
-        printf("Final output: %s", new_ref);
+        update_head(new_ref);
+        puts("Updated head");
+
+        printf("Final output: %hhu", new_ref);
     }
     
 
