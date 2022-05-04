@@ -2,6 +2,33 @@
 #include <string.h>
 #include <stdlib.h>
 #include "commit.h"
+#include <dirent.h>
+#include <sys/types.h>
+
+
+// helper function: recursively traverse directory tree taking snapshots
+reference_t *take_snapshot(DIR *dir) {
+	struct dirent *ent;
+	while(ent = readdir(dir));
+}
+
+/*
+Commit * create_commit(char * message) {
+    //Index * ind = load_index();
+    Commit * commit = (Commit *)malloc(sizeof(Commit));
+    commit->author = make_sized_string("author");
+    commit->message = make_sized_string(message);
+    commit->parents_count = 1;
+    commit->parents[0] = load_head();
+    // TODO: once `add` is implimented, this should use the index
+
+    // TODO: take snapshots of everything
+    // recursively go though files and take snapshotss
+	DIR *dir = opendir("./");
+    commit->tree = take_snapshot(dir);
+    return commit;
+}
+*/
 
 // calculate bytes required to store a commit
 size_t commit_size(Commit *commit) {
@@ -34,7 +61,6 @@ void serialize_commit(unsigned char** buffer, Commit *commit) {
 	serialize_size(&position, commit->parents_count);
 	for (size_t i = 0; i < commit->parents_count; i++) {
 		serialize_reference(&position, commit->parents[i]);
-		print_reference(commit->parents[i]);
 	}
 	serialize_sized_string(&position, commit->author);
 	serialize_sized_string(&position, commit->message);

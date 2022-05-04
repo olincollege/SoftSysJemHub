@@ -5,3 +5,6 @@ headers = reference.h storage.h commit.h index.h snaptree.h sizedstring.h
 flags = -Wall -g
 jem:  $(sources) $(headers) jem.c
 	gcc `pkg-config --cflags glib-2.0` $(flags) jem.c $(sources) -o jem `pkg-config --libs glib-2.0 openssl`
+
+clean:
+	rm -rf .jem/ jem

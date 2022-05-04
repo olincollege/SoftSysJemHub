@@ -273,7 +273,7 @@ void free_commit(Commit * commit) {
     free(commit->tree);
     free(commit->author);
     free(commit->message);
-    // TODO make sure this works with multiple
+    // TODO: make sure this works with multiple
     free(commit->parents);
     free(commit);
 }
@@ -342,14 +342,8 @@ int main(int argc, char * argv[]) {
         serialize_commit(&serialized_commit, commit);
         reference_t *commit_ref = write_buffer_to_disk(&serialized_commit, size);
         update_head(commit_ref);
-        puts("Commit Created");
-
-        // Below is for testing deserializing a commit
-        unsigned char **buff;
-        read_ref_from_disk(&buff, commit_ref);
-        Commit * com = malloc(sizeof(Commit));
-        deserialize_commit(&buff, com);
-        print_commit(commit);
+        puts("Commit Created:");
+        print_reference(commit_ref);
     }
 
     else if (!strcmp(command, "init")) {
