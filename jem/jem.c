@@ -98,7 +98,7 @@ reference_t** make_reference_children(char* path)
     while( (de=readdir(folder)) )
     {
         int is_dir = is_directory(de);
-        printf("%d\n", is_dir)
+        printf("%d\n", is_dir);
         if (is_dir) {
             // TODO: make directory reference
             puts("File is directory");
@@ -287,12 +287,12 @@ int main(int argc, char * argv[]) {
         free_index(ind);
     }
 
-    else if (!strcmp(command, "hash")) { // TESTING BLOCK FOR THE SHA1 HASHING FUNC
-        reference_t *hash = make_file_reference("test/test1.txt");
-        print_reference(hash);
-        // after done using the reference
-        free_reference(hash);
-    }
+    // else if (!strcmp(command, "hash")) { // TESTING BLOCK FOR THE SHA1 HASHING FUNC
+    //     reference_t *hash = make_file_reference("test/test1.txt");
+    //     print_reference(hash);
+    //     // after done using the reference
+    //     free_reference(hash);
+    // }
 
     else if (!strcmp(command, "snap")) { // TESTING BLOCK FOR SNAPTREE SERIALIZATION
         
@@ -377,6 +377,34 @@ int main(int argc, char * argv[]) {
 
     else if (!strcmp(command, "checkout")) {
         puts("checkout");
+        if (argc != 3) {
+            error("Please put a valid reference ID!\n Usage: ./jem checkout REF_ID\n");
+        }
+        // reference_t reference;
+        // strcpy(reference, argv[2]); // Copy from something assumed to be a reference_t type to a reference_t type
+        // printf("%s", reference);
+
+        // TESTING SEGMENT, TEMPORARY VARIABLE SETTING
+        reference_t* reference = make_file_reference("./test/test1.txt");
+        printf("Made file reference\n");
+        size_t size = sizeof(reference);
+        unsigned char * buffer = (unsigned char * ) malloc(size);
+        serialize_reference(&buffer, reference);
+        printf("Serialized\n");
+        write_buffer_to_disk(&buffer, sizeof(buffer));
+        puts("written to disk\n");
+        print_reference(reference);
+        reference_t * new_ref = malloc(sizeof(reference_t));
+        puts("mallocd new ref\n");
+        read_ref_from_disk(&buffer, reference);
+        puts("Read from disk\n");
+        deserialize_reference(&buffer, new_ref);
+        puts("Deserialized\n");
+
+        printf("Final output: %s", new_ref);
     }
+    
+
+    
     return 0;
 }
