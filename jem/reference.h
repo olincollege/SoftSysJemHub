@@ -21,3 +21,5 @@ void free_reference(reference_t *reference);
 
 // convert reference to hex string
 char * reference_to_char(reference_t *reference);
+
+reference_t * char_to_reference(char* input);

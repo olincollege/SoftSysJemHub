@@ -3,6 +3,18 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
+
+reference_t * char_to_reference(char* input) {
+    reference_t * reference = malloc(2*sizeof(reference_t));
+    int len = strlen(input);
+    for (int i = 0 ; i < len ; i ++) {
+      *reference[i] = input[i];
+      printf("input[i] : %c     ", input[i]);
+      printf("reference[i] : %c\n", reference[i]);
+    }
+    return reference;
+}
 
 void print_reference(reference_t *reference) {
   unsigned char* bytes = (unsigned char *)reference;
