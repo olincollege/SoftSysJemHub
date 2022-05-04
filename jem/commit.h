@@ -20,3 +20,5 @@ void serialize_commit(unsigned char** buffer, Commit *commit);
 
 // deserialize a commit
 void deserialize_commit(unsigned char ** buffer, Commit *commit);
+
+void print_commit(Commit *commit);

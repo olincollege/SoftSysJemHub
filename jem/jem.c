@@ -122,7 +122,7 @@ reference_t** make_reference_children(char* path)
             continue;
         }
         printf("File %3d: %s\n", i, de->d_name);
-        int is_dir = is_directory(de);
+        is_dir = is_directory(de);
         char filepath[300];
         strcpy(filepath, path);
         strcat(filepath, "/");
@@ -144,6 +144,34 @@ reference_t** make_reference_children(char* path)
     }
     closedir(folder);
     return children;
+}
+
+void update_head(reference_t * commit_ref) {
+    // Create the head file if doesnt exist and write the reference to it
+    FILE * fp;
+    fp = fopen("./.jem/HEAD", "w");
+    if(fp == NULL){
+        fputs("Unable to create file.", stderr);
+        exit(1);
+    }
+    fputs(commit_ref, fp);
+    fclose(fp);
+}
+
+reference_t* load_head() {
+    FILE * fp;
+    fp = fopen("./.jem/HEAD", "r");
+    reference_t * ref = malloc(sizeof(reference_t));
+    if(fp == NULL){
+        fputs("Unable to open file.", stderr);
+        exit(1);
+    }
+    fread(ref, 1, SHA_DIGEST_LENGTH, fp);
+    if ( ferror( fp ) != 0 ) {
+        fputs("Error reading file", stderr);
+    }
+    fclose(fp);
+    return ref;
 }
 
 
@@ -199,13 +227,6 @@ void save_index(Index* ind) {
 ////
 //// GRAPHNODE
 ////
-
-reference_t * load_head() {
-    // TODO: implement this (temporary head below)
-    // Get the latest commit from head file
-    reference_t * head = make_file_reference("test/test1.txt");
-    return head;
-}
 
 
 ////
@@ -367,18 +388,24 @@ int main(int argc, char * argv[]) {
         //free_commit(commit);
         //puts("loaded");
     }
-
+    else if (!strcmp(command, "head")) {
+        // Load the head and print its reference
+        reference_t *ref = load_head();
+        print_reference(ref);
+    }
     else if (!strcmp(command, "commit")) {
         char * message = "";
         if (argc > 2) {
             message = argv[2];
         }
         Commit * commit = create_commit(message);
+        print_commit(commit);
         size_t size = commit_size(commit);
         unsigned char *serialized_commit = malloc(size);
         serialize_commit(&serialized_commit, commit);
         puts("create");
         reference_t *commit_ref = write_buffer_to_disk(&serialized_commit, size);
+        update_head(commit_ref);
         puts("commit");
 
         // Below is for testing deserializing a commit
@@ -387,12 +414,7 @@ int main(int argc, char * argv[]) {
         puts("read");
         Commit * com = malloc(sizeof(Commit));
         deserialize_commit(&buff, com);
-        // right now the frees are causing it to crash
-        //free(buff);
-        //free(serialized_commit);
-        //free_commit(com);
-        //free_commit(commit);
-        //puts("loaded");
+        print_commit(commit);
     }
 
     else if (!strcmp(command, "init")) {
@@ -405,6 +427,7 @@ int main(int argc, char * argv[]) {
             unsigned char *serialized_commit = malloc(size);
             serialize_commit(&serialized_commit, commit);
             reference_t *commit_ref = write_buffer_to_disk(&serialized_commit, size);
+            update_head(commit_ref);
             puts("JEM Initialized. Initial Commit:\n");
             print_reference(commit_ref);
         } else {

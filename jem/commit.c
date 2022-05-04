@@ -13,6 +13,20 @@ size_t commit_size(Commit *commit) {
 			sizeof(reference_t); // snapshot tree
 }
 
+void print_commit(Commit *commit) {
+	printf("Author: %s\n", commit->author->string);
+	printf("Message: %s\n", commit->message->string);
+	printf("Parent Count: %d\n", commit->parents_count);
+	printf("Parents: ");
+	int i = 0;
+	while (commit->parents[i] != NULL){
+		print_reference(commit->parents[i]);
+		i++;
+	}
+	printf("Tree: ");
+	print_reference(commit->tree);
+}
+
 // serialize a commit
 void serialize_commit(unsigned char** buffer, Commit *commit) {
 	unsigned char* position = *buffer;
