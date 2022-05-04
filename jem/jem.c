@@ -104,8 +104,13 @@ int get_dir_filecount(char * path){
     return files;
 }
 
+
 reference_t** make_reference_children(char* path)
 {
+    // Go through path and for each file
+    // Create a snapshot, serialize and save it
+    // Add the reference to children
+    // Return all children
     DIR *folder;
     struct dirent *de;
     int is_dir;
@@ -128,7 +133,7 @@ reference_t** make_reference_children(char* path)
         strcat(filepath, "/");
         strcat(filepath, de->d_name);
         if (is_dir) {
-            // TODO: make directory reference here
+            // TODO: make directory reference here? Possibly not needed
             puts("File is directory");
             reference_t** sub_dir_children = make_reference_children(filepath);
             int i_d = 0;
@@ -138,13 +143,26 @@ reference_t** make_reference_children(char* path)
                 i_d++;
             }
         } else {
-            children[i] = make_file_reference(filepath);
+            // Each file goes here
+            reference_t *file_ref = make_file_reference(filepath);
+            copy_file_to_jem(filepath, file_ref);
+            Snapshot * file_snap = malloc(sizeof(Snapshot));
+            stat(filepath, file_snap->mode);
+            file_snap->path = make_sized_string(filepath);
+            file_snap->reference = file_ref;
+            size_t size = snaptree_size(file_snap);
+            unsigned char * buffer = malloc(size);
+            serialize_snapshot(&buffer, file_snap);
+            puts("Writing snapshot to disk");
+            reference_t *snap_ref = write_buffer_to_disk(&buffer, size);
+            children[i] = snap_ref;
             i++;
         }
     }
     closedir(folder);
     return children;
 }
+
 
 void update_head(reference_t * commit_ref) {
     // Create the head file if doesnt exist and write the reference to it
@@ -174,56 +192,6 @@ reference_t* load_head() {
     return ref;
 }
 
-
-char ** get_test_files() {
-    // Returns list of strings with test filenames
-    // Index 0 and 1 reserved for filename and command
-    char** test_files = malloc(4 * sizeof(char*));
-    test_files[2] = "./test/test1.txt";
-    test_files[3] = "./test/test2.txt";
-    return test_files;
-}
-
-void free_test_files(char ** test_files) {
-    free(test_files);
-}
-
-////
-//// INDEX
-////
-
-Index* make_index() {
-    Index * ind = (Index * )malloc(sizeof(Index));
-    ind->file_count=0;
-    return ind;
-}
-
-void free_index(Index * ind) {
-    free(ind);
-}
-
-void add_files_to_index(int argc, char * argv[], Index *ind){
-    // Add all arguments after the first to the index
-    for (int i=2; i < argc; i++){
-        // TODO: broke, will fix - elvis
-        //ind->file_names[ind->file_count] = argv[i];
-        //puts(ind->file_names[ind->file_count]); // Print added filename
-        ind->file_count +=1;
-    }
-}
-
-Index* load_index() {
-    // TODO: implement this (temporary example files below)
-    Index * ind = make_index();
-    char** test_files = get_test_files();
-    add_files_to_index(4, test_files, ind);
-    return ind;
-}
-
-void save_index(Index* ind) {
-    // TODO: implement this
-}
-
 ////
 //// GRAPHNODE
 ////
@@ -233,10 +201,6 @@ void save_index(Index* ind) {
 //// SNAPSHOT
 ////
 
-Snapshot * create_tree_node() {
-    Snapshot * snapshot = (Snapshot *)malloc(sizeof(Snapshot));
-    return snapshot;
-}
 
 void free_tree_node(Snapshot * snapshot) {
     free(snapshot);
@@ -259,22 +223,17 @@ SnapTree * create_snap_tree_from_index(Index * ind) {
     return snap_tree;
 }
 
-SnapTree * create_snap_tree_current_dir() {
+SnapTree * create_snap_tree_dir(char * path) {
     // Create a SnapTree of the current directory
     // TODO: i broke this, will fix ASAP -elvis
     SnapTree * snap_tree = create_snap_tree();
-    //snap_tree->tree_head = create_tree_node();
+    snap_tree->path = make_sized_string(path);
+    stat(path, snap_tree->mode);
     int i = 0;
     DIR *dir;
-    struct dirent *ent;
-    if ((dir = opendir ("./")) != NULL) { // Open current directory
-        while ((ent = readdir (dir)) != NULL) {
-            if (strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")) { // Get all the files in the current directory that are not . or ..
-                //snap_tree->tree_head->snap[i] = ent->d_name;
-                //printf("file %i: %s\n", i, snap_tree->tree_head->snap[i]);
-                i++;
-            }
-        }
+    struct dirent *de;
+    if ((dir = opendir (path)) != NULL) {
+        snap_tree->children = make_reference_children(path);
         closedir (dir);
     } else {
         error("Could not open directory");
@@ -291,16 +250,13 @@ reference_t * create_ref_from_snap_tree(SnapTree * snap) {
 ////
 
 Commit * create_commit(char * message) {
-    //Index * ind = load_index();
     Commit * commit = (Commit *)malloc(sizeof(Commit));
     commit->author = make_sized_string("author");
     commit->message = make_sized_string(message);
     commit->parents_count = 1;
     commit->parents[0] = load_head();
-    // TODO: change tree
-    commit->tree = make_file_reference("./test/test1.txt");
-    // TODO: replace with a reference
-    //commit->tree = create_snap_tree_from_index(ind);
+    SnapTree * initial_snap = create_snap_tree_dir("test");
+    commit->tree = create_ref_from_snap_tree(initial_snap);
     return commit;
 }
 
@@ -311,7 +267,7 @@ Commit * create_initial_commit() {
     commit->parents_count = 0;
     // TODO: Can parent be an empty reference?
     commit->parents[0] = (reference_t *) malloc(sizeof(reference_t)); 
-    SnapTree * initial_snap = create_snap_tree_current_dir();
+    SnapTree * initial_snap = create_snap_tree_dir("test");
     commit->tree = create_ref_from_snap_tree(initial_snap);
     return commit;
 }
@@ -329,25 +285,10 @@ void free_commit(Commit * commit) {
 int main(int argc, char * argv[]) {
     if (argc == 1) {
         puts("Not a valid use of ./jem!");
-        return 0;  }
-    char * command = argv[1];
-
-    if (!strcmp(command, "add")) {
-        Index* ind = make_index();
-        add_files_to_index(argc, argv, ind);
-        save_index(ind);
-        puts("Files Added");
-        free_index(ind);
+        return 0;  
     }
-
-    // else if (!strcmp(command, "hash")) { // TESTING BLOCK FOR THE SHA1 HASHING FUNC
-    //     reference_t *hash = make_file_reference("test/test1.txt");
-    //     print_reference(hash);
-    //     // after done using the reference
-    //     free_reference(hash);
-    // }
-
-    else if (!strcmp(command, "snap")) { // TESTING BLOCK FOR SNAPTREE SERIALIZATION
+    char * command = argv[1];
+    if (!strcmp(command, "snap")) { // TESTING BLOCK FOR SNAPTREE SERIALIZATION
         
         char * filepath = "test";
         SnapTree * snaptree = create_snap_tree(); // allocs snaptree

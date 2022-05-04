@@ -29,6 +29,31 @@ reference_t *write_buffer_to_disk(unsigned char** buffer, size_t size) {
 	return reference;
 }
 
+// Copy a file to .jem using reference as filename
+void copy_file_to_jem(char * src_filepath, reference_t *file_ref) {
+	FILE *source, *target;
+	char ch;
+	char target_filepath[300] = ".jem/";
+	strcat(target_filepath, reference_to_char(file_ref));
+	source = fopen(src_filepath, "r");
+	if( source == NULL ) {
+			fputs("Error opening file", stderr);
+			exit(EXIT_FAILURE);
+	}
+	target = fopen(target_filepath, "w");
+	if( target == NULL ) {
+			fclose(source);        
+			fputs("Error opening file", stderr);       
+			exit(EXIT_FAILURE);
+	}
+	while( ( ch = fgetc(source) ) != EOF ) {
+        fputc(ch, target);
+	}
+	printf("File copied successfully: %s\n", target_filepath);        
+	fclose(source);        
+	fclose(target);
+}
+
 // can read size to allocate the buffer
 void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
 	char * filename = reference_to_char(reference);
