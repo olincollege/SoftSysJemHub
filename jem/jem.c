@@ -379,28 +379,32 @@ int main(int argc, char * argv[]) {
         if (argc != 3) {
             error("Please put a valid reference ID!\n Usage: ./jem checkout REF_ID\n");
         }
-        // reference_t reference;
-        // strcpy(reference, argv[2]); // Copy from something assumed to be a reference_t type to a reference_t type
-        // printf("%s", reference);
+        reference_t reference;
+        strcpy(reference, argv[2]); // Copy from something assumed to be a reference_t type to a reference_t type
+        printf("%s", reference);
 
-        // TESTING SEGMENT, TEMPORARY VARIABLE SETTING
-        reference_t* reference = make_file_reference("./test/test1.txt");
-        printf("Made file reference\n");
-        size_t size = sizeof(reference);
+        // // TESTING SEGMENT, TEMPORARY VARIABLE SETTING
+        // reference_t* reference = make_file_reference("./.jem/testcheck.txt");
+        print_reference(reference);
+        printf("Made file reference %hhu\n", reference);
+        size_t size = sizeof(reference_t);
         unsigned char * buffer = (unsigned char * ) malloc(size);
         serialize_reference(&buffer, reference);
-        printf("Serialized\n");
-        write_buffer_to_disk(&buffer, sizeof(buffer));
-        puts("written to disk\n");
-        print_reference(reference);
+        printf("Serialized, %u\n", *buffer);
+        reference_t * commit = write_buffer_to_disk(&buffer, sizeof(buffer));
+        printf("written to disk %u\n", *buffer);
+        print_reference(commit);
         reference_t * new_ref = malloc(sizeof(reference_t));
         puts("mallocd new ref\n");
-        read_ref_from_disk(&buffer, reference);
+        read_ref_from_disk(&buffer, commit);
         puts("Read from disk\n");
         deserialize_reference(&buffer, new_ref);
         puts("Deserialized\n");
 
-        printf("Final output: %s", new_ref);
+        update_head(new_ref);
+        puts("Updated head");
+
+        printf("File reference %hhu\n", new_ref);
     }
     
 
