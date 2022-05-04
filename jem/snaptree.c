@@ -2,10 +2,15 @@
 #include "sizedstring.h"
 #include "storage.h"
 #include <string.h>
+#include <stdio.h>
 
 
-Snapshot * make_snapshot() {
-    return;
+// calculate bytes required to store a commit
+size_t snaptree_size(SnapTree *tree) {
+	return  sizeof(size_t) + // the tree itself counts i think?
+            sized_string_size(tree->path) + // Size of the path string
+			sizeof(tree->mode) + // Size of the mode of the tree, in bytes
+			sizeof(tree->children); // snapshot tree
 }
 
 void serialize_snapshot(unsigned char** buffer, Snapshot * shot) {
@@ -45,7 +50,7 @@ void serialize_snaptree(unsigned char** buffer, SnapTree * tree) {
 void deserialize_snaptree(unsigned char** buffer, SnapTree * tree) {
     SizedString * path = (SizedString *) malloc(sizeof(SizedString));
     deserialize_sized_string(buffer, path);
-    printf("%lu\n", path->size);
+    printf("%zu\n", path->size);
 	printf("%s\n", path->string);
     tree->path = path;
 
@@ -71,6 +76,7 @@ void deserialize_snaptree(unsigned char** buffer, SnapTree * tree) {
 void free_snapshot(Snapshot *shot) {
 	// TODO: check if this is making any assumptions about memory layout
 	free_sized_string(shot->path);
+    free_reference(shot->reference);
 }
 
 // Get mode of a snapshot
@@ -80,7 +86,7 @@ mode_t snap_mode(Snapshot * shot) {
 
 // free a snaptree
 void free_snaptree(SnapTree *tree) {
-    free_snapshot(tree->path);
+    free_sized_string(tree->path);
     int i = 0;
     while (tree->children[i] != NULL) {
         free_snapshot(tree->children[i]);

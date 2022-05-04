@@ -20,6 +20,9 @@ typedef struct {
     reference_t **children; // list of references to snapshots or snap trees
 } SnapTree;
 
+// Calculate the size of a snaptree, in bytes 
+size_t snaptree_size(SnapTree *tree);
+
 // Serialize a snapshot
 void serialize_snapshot(unsigned char** buffer, Snapshot * shot);
 

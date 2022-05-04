@@ -53,6 +53,37 @@ int check_dir(){
     }
     return 0;
 }
+reference_t** make_reference_children(char* path)
+{
+
+    DIR *folder;
+    struct dirent *entry;
+    int files = 0;
+
+    folder = opendir(path);
+    if(folder == NULL)
+    {
+        error("Unable to read directory");
+    }
+
+    
+    while( (entry=readdir(folder)) )
+    {
+        files++;
+        printf("File %3d: %s\n",
+                files,
+                entry->d_name
+              );
+    }
+    reference_t** children = malloc(files * sizeof(reference_t));
+    for (int i = 0; i < files; i++) {
+        children[i] = make_file_reference(entry->d_name);
+    }
+
+    closedir(folder);
+
+    return children;
+}
 
 
 char ** get_test_files() {
@@ -136,12 +167,6 @@ void free_tree_node(Snapshot * snapshot) {
 SnapTree * create_snap_tree() {
     SnapTree * snap_tree = (SnapTree *)malloc(sizeof(SnapTree));
     return snap_tree;
-}
-
-void free_snap_tree(SnapTree * snap_tree) {
-    free_sized_string(&snap_tree->path);
-    // TODO: loop through children and each reference
-    free(snap_tree);
 }
 
 SnapTree * create_snap_tree_from_index(Index * ind) {
@@ -238,6 +263,43 @@ int main(int argc, char * argv[]) {
         print_reference(hash);
         // after done using the reference
         free_reference(hash);
+    }
+
+    else if (!strcmp(command, "snap")) { // TESTING BLOCK FOR SNAPTREE SERIALIZATION
+        
+        char * filepath = "test";
+        SnapTree * snaptree = create_snap_tree(); // allocs snaptree
+        SizedString * path = make_sized_string(filepath); // allocs sizedstring
+        snaptree->path = path;
+        printf("Filepath: %s", snaptree->path->string);
+
+        struct stat v; // Use sys/stat.h stat() command to store file info in a struct.
+        stat(filepath, &v); 
+        snaptree->mode = v.st_mode; // Save the mode to the snaptree.
+        puts("Mode made");
+
+        reference_t ** children = make_reference_children(filepath);
+        snaptree->children = children;
+
+
+        size_t size = snaptree_size(snaptree);
+        unsigned char * serialized_snaptree = malloc(size);
+        serialize_snaptree(&serialized_snaptree, snaptree);
+        puts("Serialized");
+        reference_t * tree_ref = write_buffer_to_disk(&serialized_snaptree, size);
+        
+        // Below is for testing deserializing a snaptree
+        unsigned char ** buff;
+        read_ref_from_disk(buff, tree_ref);
+        puts("read");
+        SnapTree * new_tree = malloc(sizeof(Commit));
+        deserialize_snaptree(buff, new_tree);
+        // right now the frees are causing it to crash
+        //free(buff);
+        //free(serialized_commit);
+        //free_commit(com);
+        //free_commit(commit);
+        //puts("loaded");
     }
 
     else if (!strcmp(command, "commit")) {
