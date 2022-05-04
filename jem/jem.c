@@ -403,15 +403,13 @@ int main(int argc, char * argv[]) {
         size_t size = commit_size(commit);
         unsigned char *serialized_commit = malloc(size);
         serialize_commit(&serialized_commit, commit);
-        puts("create");
         reference_t *commit_ref = write_buffer_to_disk(&serialized_commit, size);
         update_head(commit_ref);
-        puts("commit");
+        puts("Commit Created");
 
         // Below is for testing deserializing a commit
         unsigned char **buff;
         read_ref_from_disk(&buff, commit_ref);
-        puts("read");
         Commit * com = malloc(sizeof(Commit));
         deserialize_commit(&buff, com);
         print_commit(commit);
@@ -428,7 +426,7 @@ int main(int argc, char * argv[]) {
             serialize_commit(&serialized_commit, commit);
             reference_t *commit_ref = write_buffer_to_disk(&serialized_commit, size);
             update_head(commit_ref);
-            puts("JEM Initialized. Initial Commit:\n");
+            puts("JEM Initialized. Initial Commit:");
             print_reference(commit_ref);
         } else {
             puts("This is a JEM project already");
