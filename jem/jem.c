@@ -175,6 +175,10 @@ SnapTree * create_snap_tree_current_dir() {
     return snap_tree;
 }
 
+reference_t * create_ref_from_snap_tree(SnapTree * snap) {
+    return make_reference(snap, sizeof(SnapTree));
+}
+
 ////
 //// COMMIT
 ////
@@ -182,7 +186,7 @@ SnapTree * create_snap_tree_current_dir() {
 Commit * create_commit(char * message) {
     //Index * ind = load_index();
     Commit * commit = (Commit *)malloc(sizeof(Commit));
-    commit->author = make_sized_string("test_author");
+    commit->author = make_sized_string("author");
     printf("%s\n", commit->author->string);
     commit->message = make_sized_string(message);
     commit->parents_count = 1;
@@ -191,6 +195,18 @@ Commit * create_commit(char * message) {
     commit->tree = make_file_reference("./test/test1.txt");
     // TODO: replace with a reference
     //commit->tree = create_snap_tree_from_index(ind);
+    return commit;
+}
+
+Commit * create_initial_commit() {
+    Commit * commit = (Commit *)malloc(sizeof(Commit));
+    commit->author = make_sized_string("author");
+    commit->message = make_sized_string("Initial Commit");
+    commit->parents_count = 0;
+    // TODO: Can parent be an empty reference?
+    commit->parents[0] = (reference_t *) malloc(sizeof(reference_t)); 
+    SnapTree * initial_snap = create_snap_tree_current_dir();
+    commit->tree = create_ref_from_snap_tree(initial_snap);
     return commit;
 }
 
@@ -258,7 +274,13 @@ int main(int argc, char * argv[]) {
         struct stat st = {0};
         if (stat("./.jem", &st) == -1) {
             mkdir("./.jem", 0777);
-            puts("JEM Initialized");
+            Commit * commit = create_initial_commit();
+            size_t size = commit_size(commit);
+            unsigned char *serialized_commit = malloc(size);
+            serialize_commit(&serialized_commit, commit);
+            reference_t *commit_ref = write_buffer_to_disk(&serialized_commit, size);
+            puts("JEM Initialized. Initial Commit:\n");
+            print_reference(commit_ref);
         } else {
             puts("This is a JEM project already");
         }
