@@ -438,24 +438,23 @@ int main(int argc, char * argv[]) {
         if (argc != 3) {
             error("Please put a valid reference ID!\n Usage: ./jem checkout REF_ID\n");
         }
-        // reference_t reference;
-        // strcpy(reference, argv[2]); // Copy from something assumed to be a reference_t type to a reference_t type
-        // printf("%s", reference);
+        reference_t reference;
+        strcpy(reference, argv[2]); // Copy from something assumed to be a reference_t type to a reference_t type
+        printf("%s", reference);
 
         // // TESTING SEGMENT, TEMPORARY VARIABLE SETTING
         // reference_t* reference = make_file_reference("./.jem/testcheck.txt");
-        // print_reference(reference);
-        // printf("Made file reference %hhu\n", reference);
+        print_reference(reference);
+        printf("Made file reference %hhu\n", reference);
         size_t size = sizeof(reference_t);
         unsigned char * buffer = (unsigned char * ) malloc(size);
-        // serialize_reference(&buffer, reference);
-        // printf("Serialized, %u\n", *buffer);
-        // reference_t * commit = write_buffer_to_disk(&buffer, sizeof(buffer));
-        // printf("written to disk %u\n", *buffer);
-        // print_reference(commit);
+        serialize_reference(&buffer, reference);
+        printf("Serialized, %u\n", *buffer);
+        reference_t * commit = write_buffer_to_disk(&buffer, sizeof(buffer));
+        printf("written to disk %u\n", *buffer);
+        print_reference(commit);
         reference_t * new_ref = malloc(sizeof(reference_t));
         puts("mallocd new ref\n");
-        reference_t * commit = (unsigned char *) "testcheck.txt";
         read_ref_from_disk(&buffer, commit);
         puts("Read from disk\n");
         deserialize_reference(&buffer, new_ref);
@@ -464,7 +463,7 @@ int main(int argc, char * argv[]) {
         update_head(new_ref);
         puts("Updated head");
 
-        print_reference(new_ref);
+        printf("File reference %hhu\n", new_ref);
     }
     
 
