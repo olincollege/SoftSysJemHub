@@ -1,12 +1,12 @@
 # JEM Version Control
-Our goal is to make a git-like version control system. We hope to extend this MVP to add a way for multiple people to work on a repository, similar to github. Our lower bound is to create a software that allows us to create repositories and create commits on that repository, saving progress along the way. Our stretch goals are to add more advanced features in git such as branches and merging. We also want to add a way to sync repositories across a network.
+Our goal was to make a git-like version control system. We hope to extend this MVP to add a way for multiple people to work on a repository, similar to GitHub. Our lower bound was to create a software that allows us to create repositories and create commits on that repository, saving progress along the way. Our stretch goals were to add more advanced features in git such as branches and merging. We also wanted to add a way to sync repositories across a network.
 ## Project Learning Goals ##
 #### Jonas
-I want to learn more about how git works and why it is such a widely used version control system. I also want to work on my overall C development skills such as creating make files, using libraries, and networking.
+"I want to learn more about how git works and why it is such a widely used version control system. I also want to work on my overall C development skills such as creating make files, using libraries, and networking."
 #### Miles
-I want to learn more about how Git optimizes for storage space while still maintaining the existence of every previous version of a document. I would love to discover exactly how this is done. I also want to work with sockets and understand internet connections on a more fundamental level.
+"I want to learn more about how Git optimizes for storage space while still maintaining the existence of every previous version of a document. I would love to discover exactly how this is done. I also want to work with sockets and understand internet connections on a more fundamental level."
 #### Elvis
-I want to learn more about low level network programming and how to write robust networked programs that can deal with loss of connection and other errors. I also hope to build the skills necessary to effectively develop c software on a team and take advantage of git and make effectively to do so. I would like to improve my ability to test c programs thoroughly and especially consider how to do this best around networking code and distributed systems.
+"I want to learn more about low level network programming and how to write robust networked programs that can deal with loss of connection and other errors. I also hope to build the skills necessary to effectively develop c software on a team and take advantage of git and make effectively to do so. I would like to improve my ability to test c programs thoroughly and especially consider how to do this best around networking code and distributed systems."
 ## Resources and Needs ##
 We used git as guidance and inspiration when designing JEM. The following resources were useful in informing our design:
 1. https://ericsink.com/entries/time_space_tradeoffs.html
@@ -41,20 +41,21 @@ In this project we created a version control system called JEM. JEM consists of 
 
  To store and track all the information needed we created the following data structures:
 
-- **Commit**  
-Contains all the information needed to reconstruct a given state of the repository. 
-
-- **reference_t**  
-A hash of a given piece of data. We use this hash as a unique filename and a way to determine if any data has changed.
-
-- **SnapTree**  
-A way to represent a directory structure. Contains the path to the directory, file mode, and an array of children references that represent the containing files.
-
-- **Snapshot**  
-A node in a snaptree that represents a file. Contains the path to the file, file mode, and a reference (hash of the filename used to save the file)
-
 - **SizedString**  
 A struct that contains a string and its size. This helps us serialize and deserialize data.  
+
+- **reference_t**  
+A hash of a given piece of data. We use this hash as a unique filename and a way to determine if any data has changed. We used this structure to represent multiple different kinds of data, similar to the way that Git hashes all of its data structures.
+
+- **Snapshot**  
+A node in a snaptree that represents a file. Contains the path to the file, file mode (e.g. “RW”), and a reference (hash of the filename used to save the file)
+
+- **SnapTree**  
+Short for Snapshot Tree. A way to represent a directory structure. Contains the path to the directory, file mode, and an array of children references that represent the containing files.
+
+- **Commit**  
+Contains all the information needed to reconstruct a given state of the repository. This includes the parent commit for history tracking and a snapshot tree of all files in the working directory at the time of commitment. 
+
 
 To track the history of commits, each commit contains a reference to its parent. This is illustrated below.
 
@@ -83,35 +84,44 @@ Lastly, to return to a previous state you can checkout a specific hashed commit.
 
 ![Checkout image](./images/checkout.jpg)
 
-TODO: maybe explain the loading of data here
+
+Given a reference ID to a commit, it is possible to reconstruct a working directory from snapshot data. This is what Git does, and this is also what we chose to do. When one uses the comment `./jem checkout "REF_ID"`, the commit at the reference given becomes the new (detached) head of the commit branch and the files from that snapshot overwrite files in the current working directory.
+
+
 Example usage:
 ```c
-./jem init
 
-JEM Initialized. Initial Commit:
-d8259aff13b91da8a940fa6a5d1973a06b898a36
+./jem checkout "REF_ID"
+
+Output:
+  JEM Initialized. Initial Commit:
+  d8259aff13b91da8a940fa6a5d1973a06b898a36
 
 // do work
 ./jem commit “Add feature x”
 
-Commit Created:
-5f94b349cf4bd3af00890cbb36865cbae50c2e82
+Output:
+  Commit Created:
+  5f94b349cf4bd3af00890cbb36865cbae50c2e82
 
 // do more work
 ./jem commit “Break feature x”
 
-Commit Created:
-6778f2acd980351399b857ee7ef952fa9e1ddaef
+Output:
+  Commit Created:
+  6778f2acd980351399b857ee7ef952fa9e1ddaef
 
 ./jem checkout 5f94b349cf4bd3af00890cbb36865cbae50c2e82
 
-Loaded Commit:
-5f94b349cf4bd3af00890cbb36865cbae50c2e82
+Output:
+  Loaded Commit:
+  5f94b349cf4bd3af00890cbb36865cbae50c2e82
 ```
 
 ### Design Decision ###
 One of the biggest design decisions we made was how to store the internal state and history. Initially, we were planning on using JSON to store all of our structs so that we could restore the program state each time a command is run. This was motivated by simplicity, but we realized that working with JSON in C is not as trivial as in Python or JavaScript. As a result, we started looking into how we could serialize GLib hash tables ourselves; we assumed that hash tables would be a fast solution to many of our data problems. However, when we started thinking about the operation of the program, we realized that hashtables would not be as useful because we are only doing a few operations between deserializing and re-serializing the modified data structures, so they would not be very useful.
-We read up on the internal operation of git and played around the internal files to wrap our heads around how it all worked. We decided to follow some of git’s clever design decisions, particularly around how git uses hashes to refer to all objects and files. This approach appealed to us because the same solution works for all of our data needs and can store data structures as well as files without separate abstractions. This allows us to point to a specific version of a file in internal storage and has built-in caching - if we attempt to store a file with the same contents no extra space is used!  In practice, this means that when we want to save a data structure we just hash it and use the hash as the filename. To save a file we do the same with the file contents and then copy them to the internal history. This gives us our own replacement for pointers that work even when serializing or moving to a different machine!
+
+We read up on the internal operation of Git and played around the internal files to wrap our heads around how it all worked. We decided to follow some of Git’s clever design decisions, particularly around how Git uses hashes to refer to all objects and files. This approach appealed to us because the same solution works for all of our data needs and can store data structures as well as files without separate abstractions. This allows us to point to a specific version of a file in internal storage and has built-in caching - if we attempt to store a file with the same contents no extra space is used!  In practice, this means that when we want to save a data structure we just hash it and use the hash as the filename. To save a file we do the same with the file contents and then copy them to the internal history. This gives us our own replacement for pointers that work even when serializing or moving to a different machine!
 Below is the function we used to hash files that uses the openssl library. In essence, this function creates a reference struct, reads in data from a file into a buffer, and updates the reference struct with the hashed data. 
 ```c
 reference_t *make_file_reference(char* filepath) {
