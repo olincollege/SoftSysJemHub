@@ -86,7 +86,7 @@ void read_ref_from_disk_char(unsigned char** buffer, char * filename) {
 	char path[47] = ".jem/";
 	strncat(path, filename, 42);
 	printf("path: %s\n", path);
-	printf("strlen(path) = %i\n", strlen(path));
+	printf("strlen(path) = %lu\n", strlen(path));
 	FILE *fp = fopen(path, "r");
 	if (fp != NULL) {
 		size_t size;

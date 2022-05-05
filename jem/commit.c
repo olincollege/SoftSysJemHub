@@ -54,7 +54,7 @@ size_t commit_size(Commit *commit) {
 void print_commit(Commit *commit) {
 	printf("Author: %s\n", commit->author->string);
 	printf("Message: %s\n", commit->message->string);
-	printf("Parent Count: %d\n", commit->parents_count);
+	printf("Parent Count: %lu\n", commit->parents_count);
 	printf("Parents: ");
 	int i = 0;
 	while (commit->parents[i] != NULL){

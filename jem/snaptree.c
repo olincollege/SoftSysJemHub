@@ -5,12 +5,20 @@
 #include <stdio.h>
 
 
-// calculate bytes required to store a commit
+// calculate bytes required to store a snaptree
 size_t snaptree_size(SnapTree *tree) {
-	return  sizeof(size_t) + // the tree itself counts i think?
+	return  sizeof(size_t) + // size field
             sized_string_size(tree->path) + // Size of the path string
 			sizeof(tree->mode) + // Size of the mode of the tree, in bytes
-			sizeof(tree->children); // snapshot tree
+            sizeof(size_t) + // children_count
+			tree->children_length * sizeof(reference_t); // snapshot tree
+}
+
+size_t snapshot_size(Snapshot *snapshot) {
+	return  sizeof(size_t) + // the tree itself counts i think?
+            sized_string_size(snapshot->path) + // Size of the path string
+			sizeof(snapshot->mode) + // Size of the mode of the tree, in bytes
+			sizeof(reference_t); // snapshot tree
 }
 
 void serialize_snapshot(unsigned char** buffer, Snapshot * shot) {

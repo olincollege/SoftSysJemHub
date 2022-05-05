@@ -5,13 +5,6 @@
 #include <unistd.h>
 #include <string.h>
 
-reference_t * char_to_reference(char* input) {
-  printf("%d", sizeof(reference_t));
-  reference_t * reference = malloc(sizeof(reference_t));
-  xtob(reference, input, 40);
-  return reference;
-}
-
 void print_reference(reference_t *reference) {
   unsigned char* bytes = (unsigned char *)reference;
   int i = 0;
@@ -51,6 +44,13 @@ void xtob(unsigned char*bb, char *xp, int n) {
       bb[idx] = nibble << 4;
     }
   }
+}
+
+reference_t * char_to_reference(char* input) {
+  printf("%lu", sizeof(reference_t));
+  reference_t * reference = malloc(sizeof(reference_t));
+  xtob(reference, input, 40);
+  return reference;
 }
 
 char * reference_to_char(reference_t * reference) {

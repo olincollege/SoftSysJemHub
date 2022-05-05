@@ -122,6 +122,8 @@ reference_t** make_reference_children(char* path)
         error("Unable to read directory");
     }
     int i = 0;
+    // buffer for stat struct
+    struct stat *fstats = malloc(sizeof(struct stat));
     while( (de=readdir(folder)) ) {
         if (is_parent_directory(de)) {
             continue;
@@ -147,10 +149,13 @@ reference_t** make_reference_children(char* path)
             reference_t *file_ref = make_file_reference(filepath);
             copy_file_to_jem(filepath, file_ref);
             Snapshot * file_snap = malloc(sizeof(Snapshot));
-            stat(filepath, file_snap->mode);
+            // use stat to get mode
+            // if the INDEX was in use, stat would be called during add and record last modified timestamp
+            stat(filepath, fstats);
+            file_snap->mode = fstats->st_mode;
             file_snap->path = make_sized_string(filepath);
             file_snap->reference = file_ref;
-            size_t size = snaptree_size(file_snap);
+            size_t size = snapshot_size(file_snap);
             unsigned char * buffer = malloc(size);
             serialize_snapshot(&buffer, file_snap);
             puts("Writing snapshot to disk");
@@ -222,13 +227,12 @@ SnapTree * create_snap_tree_from_index(Index * ind) {
 
 SnapTree * create_snap_tree_dir(char * path) {
     // Create a SnapTree of the current directory
-    // TODO: i broke this, will fix ASAP -elvis
     SnapTree * snap_tree = create_snap_tree();
     snap_tree->path = make_sized_string(path);
     stat(path, snap_tree->mode);
     int i = 0;
     DIR *dir;
-    struct dirent *de;
+    //struct dirent *de;
     if ((dir = opendir (path)) != NULL) {
         snap_tree->children = make_reference_children(path);
         closedir (dir);
@@ -380,7 +384,7 @@ int main(int argc, char * argv[]) {
         // // print_reference(reference);
         // printf("Made file reference %hhu\n", reference);
         
-        printf("strlen(REF_ID) + 5 = %i\n", strlen(REF_ID) + 5);
+        printf("strlen(REF_ID) + 5 = %lu\n", strlen(REF_ID) + 5);
         reference_t * new_ref = char_to_reference(REF_ID);
         unsigned char **buffer;
         read_ref_from_disk(&buffer, new_ref);

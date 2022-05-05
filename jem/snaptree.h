@@ -17,11 +17,15 @@ typedef struct {
     SizedString *path; // where the snapshot is (directory or file)
     mode_t mode;
     // TODO: this needs to be sorted for creating tree from index
+    size_t children_length;
     reference_t **children; // list of references to snapshots or snap trees
 } SnapTree;
 
 // Calculate the size of a snaptree, in bytes 
 size_t snaptree_size(SnapTree *tree);
+
+// Calculate the size of a snapshot, in bytes 
+size_t snapshot_size(Snapshot *snapshot);
 
 // Serialize a snapshot
 void serialize_snapshot(unsigned char** buffer, Snapshot * shot);
