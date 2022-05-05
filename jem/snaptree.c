@@ -51,7 +51,7 @@ void serialize_snaptree(unsigned char** buffer, SnapTree * tree) {
     }
     serialize_family_size(buffer, i);
     for (int j=0; j < i; j++) {
-        serialize_snapshot(buffer, tree->children[j]);
+        serialize_reference(buffer, tree->children[j]);
     }
 }
 
@@ -68,7 +68,7 @@ void deserialize_snaptree(unsigned char** buffer, SnapTree * tree) {
     tree-> mode = mode;
 
     int i;
-    deserialize_family_size(buffer, i); // Get the number of children the tree has
+    deserialize_family_size(buffer, &i); // Get the number of children the tree has
     printf("Tree has %i children\n" , i);
 
     Snapshot ** children; // Array of [pointers to] Snapshots
@@ -97,7 +97,7 @@ void free_snaptree(SnapTree *tree) {
     free_sized_string(tree->path);
     int i = 0;
     while (tree->children[i] != NULL) {
-        free_snapshot(tree->children[i]);
+        free_reference(tree->children[i]);
         i++;
     }
 }
@@ -117,7 +117,7 @@ void serialize_family_size(unsigned char ** buffer, int i) {
     *buffer += sizeof(int);
 }
 
-void deserialize_family_size(unsigned char ** buffer, int i) {
-    memcpy(&i, buffer, sizeof(int));
+void deserialize_family_size(unsigned char ** buffer, int *i) {
+    memcpy(i, buffer, sizeof(int));
     *buffer += sizeof(int);
 }

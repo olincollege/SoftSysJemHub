@@ -71,13 +71,14 @@ void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
 		*buffer = malloc(size);
 		// load all the data in
 		fseek(fp, 0, SEEK_SET);
-    fread(*buffer, sizeof(char), size, fp);
-    if ( ferror( fp ) != 0 ) {
-        fputs("Error reading file\n", stderr);
-    }
-    fclose(fp);
+		fread(*buffer, sizeof(char), size, fp);
+		if ( ferror( fp ) != 0 ) {
+			fputs("Error reading file\n", stderr);
+		}
+		fclose(fp);
 	} else {
 		fprintf(stderr, "cannot open input file\n");
+		*buffer = NULL; // invalid value
 	}
 }
 

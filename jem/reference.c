@@ -16,9 +16,7 @@ void print_reference(reference_t *reference) {
 
 // get a reference to a buffer of bytes
 reference_t *make_reference(void *bytes, size_t size) {
-  puts("inside fn");
   reference_t *reference = malloc(sizeof(reference_t));
-  puts("allocated reference");
   SHA1(bytes, size, *reference);
   return reference;
 }
@@ -30,7 +28,7 @@ void btox(char *xp, unsigned char *bb, int n) {
 }
 
 
-void xtob(unsigned char*bb, char *xp, int n) {
+void xtob(unsigned char *bb, char *xp, int n) {
   // n is number of characters
   int idx = 0;
   for (int i = 0; i < n; i++) {
@@ -49,7 +47,7 @@ void xtob(unsigned char*bb, char *xp, int n) {
 reference_t * char_to_reference(char* input) {
   printf("%lu", sizeof(reference_t));
   reference_t * reference = malloc(sizeof(reference_t));
-  xtob(reference, input, 40);
+  xtob((unsigned char *)reference, input, 40);
   return reference;
 }
 

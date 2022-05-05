@@ -4,13 +4,18 @@
 #include "commit.h"
 #include <dirent.h>
 #include <sys/types.h>
+#include "cuserid.h"
 
 
+/*
 // helper function: recursively traverse directory tree taking snapshots
+// NOTE: currently unused
 reference_t *take_snapshot(DIR *dir) {
 	struct dirent *ent;
-	while(ent = readdir(dir));
+	while((ent = readdir(dir)));
+	// TODO: return a snapshot
 }
+*/
 
 // helper function: get the username of the system operator.
 char * get_username()
@@ -79,10 +84,8 @@ void serialize_commit(unsigned char** buffer, Commit *commit) {
 }
 
 void deserialize_commit(unsigned char ** buffer, Commit * commit) {
-	puts("deserialize");
 	size_t commit_size;
 	deserialize_size(buffer, &commit_size);
-	size_t parents_count;
 	deserialize_size(buffer, &(commit->parents_count));
 	for (size_t i = 0; i < commit->parents_count; i++) {
 		// TODO: this could use deserialize reference but I couldn't get it to work

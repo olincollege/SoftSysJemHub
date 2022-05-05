@@ -55,4 +55,4 @@ void deserialize_mode(unsigned char** buffer, mode_t * mode);
 void serialize_family_size(unsigned char ** buffer, int i);
 
 // Deserialize a counter for the number of children in a snap tree, used before deserializing children
-void deserialize_family_size(unsigned char ** buffer, int i);
+void deserialize_family_size(unsigned char ** buffer, int *i);

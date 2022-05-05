@@ -123,7 +123,7 @@ reference_t** make_reference_children(char* path)
     }
     int i = 0;
     // buffer for stat struct
-    struct stat *fstats = malloc(sizeof(struct stat));
+    struct stat fstats;
     while( (de=readdir(folder)) ) {
         if (is_parent_directory(de)) {
             continue;
@@ -151,16 +151,14 @@ reference_t** make_reference_children(char* path)
             Snapshot * file_snap = malloc(sizeof(Snapshot));
             // use stat to get mode
             // if the INDEX was in use, stat would be called during add and record last modified timestamp
-            stat(filepath, fstats);
-            file_snap->mode = fstats->st_mode;
+            stat(filepath, &fstats);
+            file_snap->mode = fstats.st_mode;
             file_snap->path = make_sized_string(filepath);
             file_snap->reference = file_ref;
             size_t size = snapshot_size(file_snap);
             unsigned char * buffer = malloc(size);
             serialize_snapshot(&buffer, file_snap);
-            puts("Writing snapshot to disk");
             reference_t *snap_ref = write_buffer_to_disk(&buffer, size);
-            puts("wrote buffer");
             children[i] = snap_ref;
             i++;
         }
@@ -178,7 +176,7 @@ void update_head(reference_t * commit_ref) {
         fputs("Unable to create file.", stderr);
         exit(1);
     }
-    fputs(commit_ref, fp);
+    fputs((const char*)commit_ref, fp);
     fclose(fp);
 }
 
@@ -229,9 +227,11 @@ SnapTree * create_snap_tree_dir(char * path) {
     // Create a SnapTree of the current directory
     SnapTree * snap_tree = create_snap_tree();
     snap_tree->path = make_sized_string(path);
-    stat(path, snap_tree->mode);
-    int i = 0;
+    struct stat fstats;
+    stat(path, &fstats);
+    snap_tree->mode = fstats.st_mode;
     DIR *dir;
+    //int i = 0;
     //struct dirent *de;
     if ((dir = opendir (path)) != NULL) {
         snap_tree->children = make_reference_children(path);
@@ -318,7 +318,7 @@ int main(int argc, char * argv[]) {
         reference_t * tree_ref = write_buffer_to_disk(&serialized_snaptree, size);
         
         // Below is for testing deserializing a snaptree
-        unsigned char ** buff;
+        unsigned char ** buff = NULL;
         read_ref_from_disk(buff, tree_ref);
         puts("read");
         SnapTree * new_tree = malloc(sizeof(Commit));
@@ -374,7 +374,7 @@ int main(int argc, char * argv[]) {
         if (argc != 3) {
             error("Please put a valid reference ID!\n Usage: ./jem checkout REF_ID\n");
         }
-        unsigned char * REF_ID = argv[2];
+        char * REF_ID = argv[2];
         // reference_t* reference = malloc(size);
         // reference = char_to_reference(REF_ID);
         // printf("Reference given: %s : %hhu\n", REF_ID, reference);
@@ -383,8 +383,6 @@ int main(int argc, char * argv[]) {
         // reference_t* reference = make_file_reference("./test/test1.txt");
         // // print_reference(reference);
         // printf("Made file reference %hhu\n", reference);
-        
-        printf("strlen(REF_ID) + 5 = %lu\n", strlen(REF_ID) + 5);
         reference_t * new_ref = char_to_reference(REF_ID);
         unsigned char **buffer;
         read_ref_from_disk(&buffer, new_ref);
