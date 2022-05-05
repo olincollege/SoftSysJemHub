@@ -12,6 +12,17 @@ reference_t *take_snapshot(DIR *dir) {
 	while(ent = readdir(dir));
 }
 
+// helper function: get the username of the system operator.
+char * get_username()
+{
+  char username[MAX_USERID_LENGTH];
+  cuserid(username);
+  printf("%s\n", username);
+  char * user = malloc(MAX_USERID_LENGTH);
+  strcpy(user, username);
+  return user;
+}
+
 /*
 Commit * create_commit(char * message) {
     //Index * ind = load_index();
