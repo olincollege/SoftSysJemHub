@@ -18,7 +18,7 @@ char * get_username()
   char username[MAX_USERID_LENGTH];
   cuserid(username);
   printf("%s\n", username);
-  char * user;
+  char * user = malloc(MAX_USERID_LENGTH);
   strcpy(user, username);
   return user;
 }
