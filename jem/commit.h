@@ -1,7 +1,11 @@
 #pragma once
+#include <unistd.h>
 #include <sys/stat.h>
 #include "reference.h"
 #include "storage.h"
+
+#define MAX_USERID_LENGTH 32
+
 
 typedef struct {
     // 1 commit unless a merge, in which case it will be 2
@@ -25,3 +29,5 @@ void serialize_commit(unsigned char** buffer, Commit *commit);
 void deserialize_commit(unsigned char ** buffer, Commit *commit);
 
 void print_commit(Commit *commit);
+
+char * get_username();
