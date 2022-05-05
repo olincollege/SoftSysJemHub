@@ -155,6 +155,7 @@ reference_t** make_reference_children(char* path)
             serialize_snapshot(&buffer, file_snap);
             puts("Writing snapshot to disk");
             reference_t *snap_ref = write_buffer_to_disk(&buffer, size);
+            puts("wrote buffer");
             children[i] = snap_ref;
             i++;
         }
@@ -370,7 +371,6 @@ int main(int argc, char * argv[]) {
             error("Please put a valid reference ID!\n Usage: ./jem checkout REF_ID\n");
         }
         unsigned char * REF_ID = argv[2];
-        size_t size = 2*sizeof(reference_t);
         // reference_t* reference = malloc(size);
         // reference = char_to_reference(REF_ID);
         // printf("Reference given: %s : %hhu\n", REF_ID, reference);
@@ -381,17 +381,15 @@ int main(int argc, char * argv[]) {
         // printf("Made file reference %hhu\n", reference);
         
         printf("strlen(REF_ID) + 5 = %i\n", strlen(REF_ID) + 5);
-        unsigned char * buffer = (unsigned char * ) malloc(size);
-        read_ref_from_disk_char(&buffer, REF_ID);
+        reference_t * new_ref = char_to_reference(REF_ID);
+        unsigned char **buffer;
+        read_ref_from_disk(&buffer, new_ref);
         Commit * commit = malloc(sizeof(Commit));
         deserialize_commit(&buffer, commit);
-        print_commit(commit);
-        // TODO this reference is wrong and we need to convert to unsigned char
-        reference_t * new_ref = REF_ID;
         // TODO: Unpack and save into working directory
-        print_reference(new_ref);
         update_head(new_ref);
         puts("Updated head");
+        print_commit(commit);
 
     }
     

@@ -19,9 +19,10 @@ void deserialize_reference(unsigned char** buffer, reference_t *reference) {
 // returns the reference to the saved data
 reference_t *write_buffer_to_disk(unsigned char** buffer, size_t size) {
 	reference_t *reference = make_reference(*buffer, size);
+	print_reference(reference);
 	char * filename = reference_to_char(reference);
 	// create a buffer big enough for filepath
-	char path[45] = ".jem/";
+	char path[46] = ".jem/";
 	strncat(path, filename, 40);
 	
 	FILE *fw = fopen(path, "w");
@@ -59,7 +60,7 @@ void copy_file_to_jem(char * src_filepath, reference_t *file_ref) {
 void read_ref_from_disk(unsigned char** buffer, reference_t *reference) {
 	char * filename = reference_to_char(reference);
 	// create a buffer big enough for filepath
-	char path[45] = ".jem/";
+	char path[46] = ".jem/";
 	strncat(path, filename, 40);
 	FILE *fp = fopen(path, "r");
 	if (fp != NULL) {
