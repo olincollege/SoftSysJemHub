@@ -6,14 +6,10 @@
 #include <string.h>
 
 reference_t * char_to_reference(char* input) {
-    reference_t * reference = malloc(2*sizeof(reference_t));
-    int len = strlen(input);
-    for (int i = 0 ; i < len ; i ++) {
-      *reference[i] = input[i];
-      printf("input[i] : %c     ", input[i]);
-      printf("reference[i] : %c\n", reference[i]);
-    }
-    return reference;
+  printf("%d", sizeof(reference_t));
+  reference_t * reference = malloc(sizeof(reference_t));
+  xtob(reference, input, 40);
+  return reference;
 }
 
 void print_reference(reference_t *reference) {
@@ -27,15 +23,34 @@ void print_reference(reference_t *reference) {
 
 // get a reference to a buffer of bytes
 reference_t *make_reference(void *bytes, size_t size) {
+  puts("inside fn");
   reference_t *reference = malloc(sizeof(reference_t));
+  puts("allocated reference");
   SHA1(bytes, size, *reference);
   return reference;
 }
 
 // https://stackoverflow.com/a/53966346
 void btox(char *xp, unsigned char *bb, int n) {
-    const char xx[]= "0123456789abcdef";
-    while (--n >= 0) xp[n] = xx[(bb[n>>1] >> ((1 - (n&1)) << 2)) & 0xF];
+  const char xx[]= "0123456789abcdef";
+  while (--n >= 0) xp[n] = xx[(bb[n>>1] >> ((1 - (n&1)) << 2)) & 0xF];
+}
+
+
+void xtob(unsigned char*bb, char *xp, int n) {
+  // n is number of characters
+  int idx = 0;
+  for (int i = 0; i < n; i++) {
+    unsigned char nibble = xp[i] < 60 ? xp[i] - 48 : xp[i]-87;
+    if (i % 2) {
+      // set lower 4 bits
+      bb[idx] = bb[idx] | nibble;
+      idx ++;
+    } else {
+      // set upper 4 bits and wipe lower 4
+      bb[idx] = nibble << 4;
+    }
+  }
 }
 
 char * reference_to_char(reference_t * reference) {
