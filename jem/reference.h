@@ -7,6 +7,9 @@
 // sha1 hash
 typedef unsigned char reference_t[SHA_DIGEST_LENGTH]; 
 
+// print bytes as hex
+void print_hex_bytes(unsigned char* bytes, size_t n);
+
 // print a hash
 void print_reference(reference_t *reference);
 

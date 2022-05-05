@@ -3,10 +3,12 @@
 #include <stdio.h>
 
 SizedString *make_sized_string(char *string) {
-	size_t size = strlen(string) + sizeof(size_t);
+	size_t len = strlen(string) + 1;
 	SizedString *sstring = malloc(sizeof(SizedString));
-	sstring->size = size;
-	sstring->string = string;
+	char *s = malloc(len);
+	memcpy(s, string, len);
+	sstring->size = len + sizeof(size_t);
+	sstring->string = s;
 	return sstring;
 }
 

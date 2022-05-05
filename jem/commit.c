@@ -6,45 +6,16 @@
 #include <sys/types.h>
 #include "cuserid.h"
 
-
-/*
-// helper function: recursively traverse directory tree taking snapshots
-// NOTE: currently unused
-reference_t *take_snapshot(DIR *dir) {
-	struct dirent *ent;
-	while((ent = readdir(dir)));
-	// TODO: return a snapshot
-}
-*/
-
 // helper function: get the username of the system operator.
 char * get_username()
 {
   char username[MAX_USERID_LENGTH];
   cuserid(username);
-  printf("%s\n", username);
+  //printf("%s\n", username);
   char * user = malloc(MAX_USERID_LENGTH);
   strcpy(user, username);
   return user;
 }
-
-/*
-Commit * create_commit(char * message) {
-    //Index * ind = load_index();
-    Commit * commit = (Commit *)malloc(sizeof(Commit));
-    commit->author = make_sized_string("author");
-    commit->message = make_sized_string(message);
-    commit->parents_count = 1;
-    commit->parents[0] = load_head();
-    // TODO: once `add` is implimented, this should use the index
-
-    // TODO: take snapshots of everything
-    // recursively go though files and take snapshotss
-	DIR *dir = opendir("./");
-    commit->tree = take_snapshot(dir);
-    return commit;
-}
-*/
 
 // calculate bytes required to store a commit
 size_t commit_size(Commit *commit) {
@@ -61,10 +32,8 @@ void print_commit(Commit *commit) {
 	printf("Message: %s\n", commit->message->string);
 	printf("Parent Count: %lu\n", commit->parents_count);
 	printf("Parents: ");
-	int i = 0;
-	while (commit->parents[i] != NULL){
+	for (size_t i = 0; i < commit->parents_count; i++) {
 		print_reference(commit->parents[i]);
-		i++;
 	}
 	printf("Tree: ");
 	print_reference(commit->tree);
@@ -84,8 +53,7 @@ void serialize_commit(unsigned char** buffer, Commit *commit) {
 }
 
 void deserialize_commit(unsigned char ** buffer, Commit * commit) {
-	size_t commit_size;
-	deserialize_size(buffer, &commit_size);
+	*buffer += sizeof(size_t); // skip size
 	deserialize_size(buffer, &(commit->parents_count));
 	for (size_t i = 0; i < commit->parents_count; i++) {
 		// TODO: this could use deserialize reference but I couldn't get it to work
@@ -98,13 +66,9 @@ void deserialize_commit(unsigned char ** buffer, Commit * commit) {
 	SizedString *message = malloc(sizeof(SizedString));
 	deserialize_sized_string(buffer, message);
 	commit->message = message;
-	//deserialize_reference()
-	memcpy(&commit->tree, buffer, sizeof(reference_t));
+	reference_t *ref = malloc(sizeof(reference_t));
+	//deserialize_reference(buffer, ref);
+	memcpy(&ref, buffer, sizeof(reference_t));
+	*buffer += sizeof(reference_t);
+	commit->tree = ref;
 }
-
-// example:
-// size_t size = commit_size(commit);
-// unsigned char* buffer = malloc();
-// serialize_commit(&buffer, commit);
-// make_reference(buffer, size)'
-// // open file and write buffer to disk

@@ -1,31 +1,35 @@
+// compiler secret magic
+#define _XOPEN_SOURCE 500
+#define _DEFAULT_SOURCE
+#include <ftw.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <dirent.h>
 #include <errno.h>
 #include <glib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "reference.h"
 #include "storage.h"
 #include "commit.h"
 #include "index.h"
 #include "snaptree.h"
+#include <stdbool.h>
 
-// TODO:
 /*
-git add :
-- Add file from working tree to index/staging area
-- The index is essentially a list of files/paths
+jem init :
+- Create .jem directory
+- Create initial commit for working tree
 
-git commit :
-- Create a branch object to be committed from the index to the repository
-- ONLY objects listed in the index can be committed
+jem commit :
+- Create a snapshot of the working directory
+- Create a commit with the snapshot
 - Update HEAD to be the latest commit
-- 
 
-git checkout : 
+jem checkout : 
 - create identifiers for every commit and store them on disk.
 - traverse the repository to find the snapshot corresponding to the identifier the user wants checked out
 - set this to the current HEAD (detached HEAD)
@@ -36,6 +40,26 @@ void error(char *msg)
 {
     fprintf(stderr, "%s: %s\n", msg, strerror(errno));
     exit(1);
+}
+
+
+// https://stackoverflow.com/a/4770992
+bool prefix(const char *pre, const char *str) {
+    return strncmp(pre, str, strlen(pre)) == 0;
+}
+
+// https://stackoverflow.com/a/5467788
+int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
+    if (prefix(".jem/", fpath)) return 0; // don't delete .jem
+    if (!strcmp(fpath, "./test")) return 0; // don't delete root
+    int rv = remove(fpath);
+    if (rv) perror(fpath);
+
+    return rv;
+}
+
+int rmrf(char *path) {
+    return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 
 int check_dir(){
@@ -73,10 +97,9 @@ int is_parent_directory(struct dirent *de) {
     return (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."));
 }
 
-int get_dir_filecount(char * path){
+int get_dir_filecount_shallow(char * path){
     DIR *folder;
     int files = 0;
-    int is_dir = 0;
     struct dirent *de;
     folder = opendir(path);
     if(folder == NULL)
@@ -88,96 +111,22 @@ int get_dir_filecount(char * path){
         if (is_parent_directory(de)) {
             continue;
         }
-        is_dir = is_directory(de);
-        if (is_dir) {
-            char filepath[300];
-            strcpy(filepath, path);
-            strcat(filepath, "/");
-            strcat(filepath, de->d_name);
-            printf("%s\n", filepath);
-            // Recursively get all files
-            files += get_dir_filecount(filepath);
-        }
         files++;
     }
     closedir(folder);
     return files;
 }
 
-
-reference_t** make_reference_children(char* path)
-{
-    // Go through path and for each file
-    // Create a snapshot, serialize and save it
-    // Add the reference to children
-    // Return all children
-    DIR *folder;
-    struct dirent *de;
-    int is_dir;
-    int files = get_dir_filecount(path);
-    printf("File Count: %d\n", files);
-    reference_t** children = calloc(files, sizeof(reference_t));
-    folder = opendir(path);
-    if(folder == NULL) {
-        error("Unable to read directory");
-    }
-    int i = 0;
-    // buffer for stat struct
-    struct stat fstats;
-    while( (de=readdir(folder)) ) {
-        if (is_parent_directory(de)) {
-            continue;
-        }
-        printf("File %3d: %s\n", i, de->d_name);
-        is_dir = is_directory(de);
-        char filepath[300];
-        strcpy(filepath, path);
-        strcat(filepath, "/");
-        strcat(filepath, de->d_name);
-        if (is_dir) {
-            // TODO: make directory reference here? Possibly not needed
-            puts("File is directory");
-            reference_t** sub_dir_children = make_reference_children(filepath);
-            int i_d = 0;
-            while (sub_dir_children[i_d] != NULL) {
-                children[i] = sub_dir_children[i_d];
-                i++;
-                i_d++;
-            }
-        } else {
-            // Each file goes here
-            reference_t *file_ref = make_file_reference(filepath);
-            copy_file_to_jem(filepath, file_ref);
-            Snapshot * file_snap = malloc(sizeof(Snapshot));
-            // use stat to get mode
-            // if the INDEX was in use, stat would be called during add and record last modified timestamp
-            stat(filepath, &fstats);
-            file_snap->mode = fstats.st_mode;
-            file_snap->path = make_sized_string(filepath);
-            file_snap->reference = file_ref;
-            size_t size = snapshot_size(file_snap);
-            unsigned char * buffer = malloc(size);
-            serialize_snapshot(&buffer, file_snap);
-            reference_t *snap_ref = write_buffer_to_disk(&buffer, size);
-            children[i] = snap_ref;
-            i++;
-        }
-    }
-    closedir(folder);
-    return children;
-}
-
-
 void update_head(reference_t * commit_ref) {
     // Create the head file if doesnt exist and write the reference to it
-    FILE * fp;
-    fp = fopen("./.jem/HEAD", "w");
-    if(fp == NULL){
+    int fd = open("./.jem/HEAD", O_CREAT);
+    if(fd == -1){
         fputs("Unable to create file.", stderr);
         exit(1);
     }
-    fputs((const char*)commit_ref, fp);
-    fclose(fp);
+    // need to write bytes because no null terminator
+    write(fd, (const char*)commit_ref, sizeof(reference_t));
+    close(fd);
 }
 
 reference_t* load_head() {
@@ -223,23 +172,87 @@ SnapTree * create_snap_tree_from_index(Index * ind) {
     return snap_tree;
 }
 
-SnapTree * create_snap_tree_dir(char * path) {
-    // Create a SnapTree of the current directory
+// load a snap tree
+void load_snaptree(reference_t *tree_ref) {
+    // deserialize the tree
+    unsigned char *buffer, start;
+    read_ref_from_disk(&buffer, tree_ref);
+    start = buffer;
+    SnapTree *tree = malloc(sizeof(SnapTree));
+    deserialize_snaptree(&buffer, tree);
+    // iterate through the children
+    Snapshot *snap;
+    for (size_t i = 0; i < tree->children_length; i++) {
+        snap = tree->children[i];
+        if (snap->type == SST_FILE) {
+            copy_file_from_jem(snap->path->string, snap->reference);
+        } else {
+            // make directory
+            mkdir(snap->path->string, snap->mode);
+            load_snaptree(snap->reference);
+        }
+    }
+}
+
+// create a snap tree, save it and return it's reference
+reference_t *create_snap_tree_dir(char * path) {
+    // Create a SnapTree of the working directory
     SnapTree * snap_tree = create_snap_tree();
-    snap_tree->path = make_sized_string(path);
-    struct stat fstats;
-    stat(path, &fstats);
-    snap_tree->mode = fstats.st_mode;
+    // need to know how many children to allocate a big enough array
+    snap_tree->children_length = get_dir_filecount_shallow(path);
+    snap_tree->children = malloc(sizeof(Snapshot *) * snap_tree->children_length);
+    
+    // traverse file tree
     DIR *dir;
-    //int i = 0;
-    //struct dirent *de;
+    size_t child = 0;
+    struct dirent *de;
+    int is_dir;
+    SnapshotType type;
+    char filepath[300];
     if ((dir = opendir (path)) != NULL) {
-        snap_tree->children = make_reference_children(path);
+        // go through all the entries at this level
+        while( (de=readdir(dir)) ) {
+            is_dir = is_directory(de);
+            strcpy(filepath, path);
+            strcat(filepath, "/");
+            strcat(filepath, de->d_name);
+            reference_t *child_ref;
+            struct stat fstats;
+
+            if (is_dir & is_parent_directory(de)) {
+                continue;
+            } else if(is_dir) {
+                // recursive call
+                child_ref = create_snap_tree_dir(filepath);
+                type = SST_DIR;
+            } else {
+                // copy the file into storage
+                child_ref = make_file_reference(filepath);
+                copy_file_to_jem(filepath, child_ref);
+                type = SST_FILE;
+            }
+            Snapshot * child_snap = malloc(sizeof(Snapshot));
+            // use stat to get mode
+            // if the INDEX was in use, stat would be called during add and record last modified timestamp
+            stat(filepath, &fstats);
+            // this will get serialized right next to the other children and saved together
+            child_snap->mode = fstats.st_mode;
+            child_snap->type = type;
+            child_snap->path = make_sized_string(filepath);
+            child_snap->reference = child_ref;
+            snap_tree->children[child] = child_snap;
+            child++;
+        }
         closedir (dir);
     } else {
         error("Could not open directory");
     }
-    return snap_tree;
+    // serialize, save, and return reference
+    size_t size = snaptree_size(snap_tree);
+    unsigned char * buffer = malloc(size);
+    unsigned char * start = buffer;
+    serialize_snaptree(&buffer, snap_tree);
+    return write_buffer_to_disk(&start, size);
 }
 
 reference_t * create_ref_from_snap_tree(SnapTree * snap) {
@@ -256,8 +269,7 @@ Commit * create_commit(char * message) {
     commit->message = make_sized_string(message);
     commit->parents_count = 1;
     commit->parents[0] = load_head();
-    SnapTree * initial_snap = create_snap_tree_dir("test");
-    commit->tree = create_ref_from_snap_tree(initial_snap);
+    commit->tree = create_snap_tree_dir("test");
     return commit;
 }
 
@@ -268,8 +280,7 @@ Commit * create_initial_commit() {
     commit->parents_count = 0;
     // TODO: Can parent be an empty reference?
     commit->parents[0] = (reference_t *) malloc(sizeof(reference_t)); 
-    SnapTree * initial_snap = create_snap_tree_dir("test");
-    commit->tree = create_ref_from_snap_tree(initial_snap);
+    commit->tree = create_snap_tree_dir("test");
     return commit;
 }
 
@@ -289,48 +300,7 @@ int main(int argc, char * argv[]) {
         return 0;  
     }
     char * command = argv[1];
-    if (!strcmp(command, "snap")) { // TESTING BLOCK FOR SNAPTREE SERIALIZATION
-        
-        char * filepath = "test";
-        SnapTree * snaptree = create_snap_tree(); // allocs snaptree
-        SizedString * path = make_sized_string(filepath); // allocs sizedstring
-        snaptree->path = path;
-        printf("Filepath: %s\n", snaptree->path->string);
-
-        struct stat v; // Use sys/stat.h stat() command to store file info in a struct.
-        stat(filepath, &v); 
-        snaptree->mode = v.st_mode; // Save the mode to the snaptree.
-        puts("Mode made");
-
-        reference_t ** children = make_reference_children(filepath);
-        snaptree->children = children;
-        int i = 0;
-        while(children[i] != NULL) {
-            print_reference(children[i]);
-            i++;
-        }
-        puts("Added references to children");
-
-        size_t size = snaptree_size(snaptree);
-        unsigned char * serialized_snaptree = malloc(size);
-        serialize_snaptree(&serialized_snaptree, snaptree);
-        puts("Serialized");
-        reference_t * tree_ref = write_buffer_to_disk(&serialized_snaptree, size);
-        
-        // Below is for testing deserializing a snaptree
-        unsigned char ** buff = NULL;
-        read_ref_from_disk(buff, tree_ref);
-        puts("read");
-        SnapTree * new_tree = malloc(sizeof(Commit));
-        deserialize_snaptree(buff, new_tree);
-        // right now the frees are causing it to crash
-        //free(buff);
-        //free(serialized_commit);
-        //free_commit(com);
-        //free_commit(commit);
-        //puts("loaded");
-    }
-    else if (!strcmp(command, "head")) {
+    if (!strcmp(command, "head")) {
         // Load the head and print its reference
         reference_t *ref = load_head();
         print_reference(ref);
@@ -370,28 +340,30 @@ int main(int argc, char * argv[]) {
     }
 
     else if (!strcmp(command, "checkout")) {
-        puts("checkout");
         if (argc != 3) {
             error("Please put a valid reference ID!\n Usage: ./jem checkout REF_ID\n");
         }
         char * REF_ID = argv[2];
-        // reference_t* reference = malloc(size);
-        // reference = char_to_reference(REF_ID);
-        // printf("Reference given: %s : %hhu\n", REF_ID, reference);
 
-        // // TESTING SEGMENT, TEMPORARY VARIABLE SETTING
-        // reference_t* reference = make_file_reference("./test/test1.txt");
-        // // print_reference(reference);
-        // printf("Made file reference %hhu\n", reference);
         reference_t * new_ref = char_to_reference(REF_ID);
-        unsigned char **buffer;
+
+        // load in the referenced commit
+        unsigned char *buffer, *start;
         read_ref_from_disk(&buffer, new_ref);
+        start = buffer;
         Commit * commit = malloc(sizeof(Commit));
         deserialize_commit(&buffer, commit);
-        // TODO: Unpack and save into working directory
-        update_head(new_ref);
-        puts("Updated head");
         print_commit(commit);
+        // delete everything except .jem
+        rmrf("./test/"); // TODO: in an ideal world we would know which files changed and skip this
+        //mkdir("./test", 0777); // recreate "root" directory
+
+        load_snaptree(commit->tree);
+
+        update_head(new_ref);
+        //print_commit(commit);
+        puts("Loaded Commit:");
+        print_reference(commit->tree);
 
     }
     

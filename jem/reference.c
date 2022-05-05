@@ -5,13 +5,16 @@
 #include <unistd.h>
 #include <string.h>
 
-void print_reference(reference_t *reference) {
-  unsigned char* bytes = (unsigned char *)reference;
-  int i = 0;
-  for (i=0; i < sizeof(reference_t); i++) {
+void print_hex_bytes(unsigned char* bytes, size_t n) {
+  for (size_t i = 0; i < n; i++) {
     printf("%02x", bytes[i] & 0xFF);
   }
   printf("\n");
+}
+
+void print_reference(reference_t *reference) {
+  unsigned char* bytes = (unsigned char *)reference;
+  print_hex_bytes(bytes, sizeof(reference_t));
 }
 
 // get a reference to a buffer of bytes
@@ -45,7 +48,6 @@ void xtob(unsigned char *bb, char *xp, int n) {
 }
 
 reference_t * char_to_reference(char* input) {
-  printf("%lu", sizeof(reference_t));
   reference_t * reference = malloc(sizeof(reference_t));
   xtob((unsigned char *)reference, input, 40);
   return reference;

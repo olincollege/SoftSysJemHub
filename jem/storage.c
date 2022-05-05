@@ -19,7 +19,6 @@ void deserialize_reference(unsigned char** buffer, reference_t *reference) {
 // returns the reference to the saved data
 reference_t *write_buffer_to_disk(unsigned char** buffer, size_t size) {
 	reference_t *reference = make_reference(*buffer, size);
-	print_reference(reference);
 	char * filename = reference_to_char(reference);
 	// create a buffer big enough for filepath
 	char path[46] = ".jem/";
@@ -51,7 +50,32 @@ void copy_file_to_jem(char * src_filepath, reference_t *file_ref) {
 	while( ( ch = fgetc(source) ) != EOF ) {
         fputc(ch, target);
 	}
-	printf("File copied successfully: %s\n", target_filepath);        
+	//printf("File copied successfully: %s\n", target_filepath);        
+	fclose(source);        
+	fclose(target);
+}
+
+// Copy a file from .jem to working tree using reference as filename
+void copy_file_from_jem(char * target_filepath, reference_t *file_ref) {
+	FILE *source, *target;
+	char ch;
+	char src_filepath[300] = ".jem/";
+	strncat(src_filepath, reference_to_char(file_ref), 40);
+	source = fopen(src_filepath, "r");
+	if( source == NULL ) {
+			fputs("Error opening file", stderr);
+			exit(EXIT_FAILURE);
+	}
+	target = fopen(target_filepath, "w");
+	if( target == NULL ) {
+			fclose(source);        
+			fputs("Error opening file", stderr);       
+			exit(EXIT_FAILURE);
+	}
+	while( ( ch = fgetc(source) ) != EOF ) {
+        fputc(ch, target);
+	}
+	//printf("File copied successfully: %s\n", target_filepath);        
 	fclose(source);        
 	fclose(target);
 }
@@ -86,8 +110,6 @@ void read_ref_from_disk_char(unsigned char** buffer, char * filename) {
 	// create a buffer big enough for filepath
 	char path[47] = ".jem/";
 	strncat(path, filename, 42);
-	printf("path: %s\n", path);
-	printf("strlen(path) = %lu\n", strlen(path));
 	FILE *fp = fopen(path, "r");
 	if (fp != NULL) {
 		size_t size;

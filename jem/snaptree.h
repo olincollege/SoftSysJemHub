@@ -3,9 +3,13 @@
 #include "storage.h"
 #include <sys/stat.h>
 
+typedef enum {
+    SST_DIR,
+    SST_FILE
+} SnapshotType;
 
-// make sure to mark which are trees and which are not
 typedef struct {
+    SnapshotType type;
     SizedString *path;
     mode_t mode;
     // reference can be used to find stored copy of file
@@ -14,11 +18,8 @@ typedef struct {
 
 // difference is children is a list
 typedef struct {
-    SizedString *path; // where the snapshot is (directory or file)
-    mode_t mode;
-    // TODO: this needs to be sorted for creating tree from index
     size_t children_length;
-    reference_t **children; // list of references to snapshots or snap trees
+    Snapshot **children; // list of references to snapshots or snap trees
 } SnapTree;
 
 // Calculate the size of a snaptree, in bytes 
@@ -26,6 +27,12 @@ size_t snaptree_size(SnapTree *tree);
 
 // Calculate the size of a snapshot, in bytes 
 size_t snapshot_size(Snapshot *snapshot);
+
+// Serialize a snapshot
+void serialize_snapshot_type(unsigned char** buffer, SnapshotType type);
+
+// Deserialize a snapshot
+void deserialize_snapshot_type(unsigned char** buffer, SnapshotType * type);
 
 // Serialize a snapshot
 void serialize_snapshot(unsigned char** buffer, Snapshot * shot);
@@ -46,7 +53,7 @@ void free_snapshot(Snapshot *shot);
 void free_snaptree(SnapTree *tree);
 
 // Serialize the mode, helper for serializing snapshots and trees
-void serialize_mode(unsigned char** buffer, mode_t * mode);
+void serialize_mode(unsigned char** buffer, mode_t mode);
 
 // Deserialize the mode, helper for deserializing snapshots and trees
 void deserialize_mode(unsigned char** buffer, mode_t * mode);
