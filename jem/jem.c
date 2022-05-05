@@ -247,7 +247,7 @@ reference_t * create_ref_from_snap_tree(SnapTree * snap) {
 
 Commit * create_commit(char * message) {
     Commit * commit = (Commit *)malloc(sizeof(Commit));
-    commit->author = make_sized_string("author");
+    commit->author = make_sized_string(get_username());
     commit->message = make_sized_string(message);
     commit->parents_count = 1;
     commit->parents[0] = load_head();
@@ -258,7 +258,7 @@ Commit * create_commit(char * message) {
 
 Commit * create_initial_commit() {
     Commit * commit = (Commit *)malloc(sizeof(Commit));
-    commit->author = make_sized_string("author");
+    commit->author = make_sized_string(get_username());
     commit->message = make_sized_string("Initial Commit");
     commit->parents_count = 0;
     // TODO: Can parent be an empty reference?
