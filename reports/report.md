@@ -91,7 +91,7 @@ Given a reference ID to a commit, it is possible to reconstruct a working direct
 Example usage:
 ```c
 
-./jem checkout "REF_ID"
+./jem init
 
 Output:
   JEM Initialized. Initial Commit:
